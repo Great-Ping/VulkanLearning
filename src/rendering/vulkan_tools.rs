@@ -1,43 +1,42 @@
-use vulkanalia::{
-    window as vk_window,
-    vk::HasBuilder,
-    vk::make_version,
-    Entry,
-    vk
-};
-use vulkanalia::loader::{
-    LibloadingLoader,
-    LIBRARY
-};
-use vulkanalia::prelude::v1_0::{
+use vulkanalia::Entry;
+use vulkanalia::loader::LibloadingLoader;
+use vulkanalia::loader::LIBRARY;
+use vulkanalia::window::get_required_instance_extensions;
+
+use vulkanalia::vk;
+use vulkanalia::vk::HasBuilder;
+use vulkanalia::vk::make_version;
+use vulkanalia::vk::{
     // Шаг первый, выбор экземпляра
-    //vk::Instance,
-    vk::PhysicalDevice,
+    Instance,
+    PhysicalDevice,
     // Шаг второй, выбор логических устройств и очередей
-    vk::Device,
-    vk::Queue,
+    Device,
+    Queue,
     // Шаг третий, поверхность окна и цепочка подкачки
-    vk::SurfaceKHR,
-    vk::SwapchainKHR,
+    SurfaceKHR,
+    SwapchainKHR,
     // Шаг четвертый, просмотр изображений и фреймбуферы
-    vk::ImageView,
-    vk::Framebuffer,// Шаг пятный, проходы ренедеринга
+    ImageView,
+    Framebuffer,// Шаг пятный, проходы ренедеринга
     // Шаг шестой, графический конвеер (создается для каждого изменения с нуля)
-    vk::Pipeline,
-    vk::ShaderModule,
+    Pipeline,
+    ShaderModule,
     // Шаг седьмой, пулы команд и командные буферы
-    vk::CommandBuffer,
-    vk::CommandPool,
+    CommandBuffer,
+    CommandPool,
     // Шаг восьмой, основной цикл
-    vk::AcquireNextImageInfoKHR,
+    AcquireNextImageInfoKHR,
     // получение изображения из цепочки подкачки
     // Выбираем буффер комманд и выполняем queuesubmit
 
     // Возвращаем изображение в цепчочку подкачки, для представления с помощь
     // vk::QueuePresentKHR
-    vk::InstanceCreateInfo,
-    vk::ApplicationInfo
+    InstanceCreateInfo,
+    ApplicationInfo
 };
+
+
 use winit::raw_window_handle::HasWindowHandle;
 
 /**
@@ -47,10 +46,11 @@ use winit::raw_window_handle::HasWindowHandle;
 Нарисуйте 3 вершины
 Завершите прохождение рендеринга **/
 
-unsafe fn create_instance(
+pub unsafe fn create_instance(
     window: &dyn HasWindowHandle,
     entry: &Entry
-) -> Result<vulkanalia::Instance, vk::ErrorCode>{
+) -> Result<vulkanalia::Instance, vk::ErrorCode> {
+
     let application_info = ApplicationInfo::builder()
         .application_name(b"Vulkan Learning\0")
         .application_version(make_version(1, 0, 0))
@@ -59,17 +59,16 @@ unsafe fn create_instance(
         .api_version(make_version(1, 0, 0))
         .build();
 
-    let extensinos = vk_window::get_required_instance_extensions(window)
+    let extensinos = get_required_instance_extensions(window)
         .iter()
         .map(|extension|extension.as_ptr())
         .collect::<Vec<_>>();
 
-    let createInfo = InstanceCreateInfo::builder()
+    let create_info = InstanceCreateInfo::builder()
         .application_info(&application_info)
         .enabled_extension_names(&extensinos)
         //.enabled_layer_count(0)
         .build();
 
-
-    return Result::Ok(entry.create_instance(&createInfo, None)?);
+    return Result::Ok(entry.create_instance(&create_info, None)?);
 }
