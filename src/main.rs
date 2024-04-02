@@ -1,4 +1,5 @@
-use crate::application::ApplicationWindow;
+use application::ApplicationWindow;
+use rendering::RenderingQueue;
 
 mod application;
 mod rendering;
@@ -10,9 +11,10 @@ fn main() {
         println!("{:?}", err);
         return;
     }
-    println!("window created!");
-    return;
+
+    RenderingQueue::new();
+
     let window = window.unwrap();
-    window.run();
+    //window.run();
 
 } // drop(str2);
