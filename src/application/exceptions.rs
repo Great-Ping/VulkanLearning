@@ -1,18 +1,23 @@
 use winit::error::{EventLoopError, OsError};
 
-use crate::rendering::{
-    RenderingQueue
-};
+use crate::rendering::{RenderingQueue, RenderingQueueError};
 
 #[derive(Debug)]
 pub enum ApplicationError{
     EventLoopError(EventLoopError),
-    WindowError(OsError)
+    WindowError(OsError),
+    RenderingQueueError(RenderingQueueError)
 }
 
 impl From<EventLoopError> for ApplicationError {
     fn from(error: EventLoopError) -> Self {
         ApplicationError::EventLoopError(error)
+    }
+}
+
+impl From<RenderingQueueError> for ApplicationError {
+    fn from(error: RenderingQueueError) -> Self {
+        ApplicationError::RenderingQueueError(error)
     }
 }
 

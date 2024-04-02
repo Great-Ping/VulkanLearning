@@ -2,15 +2,18 @@ use winit::dpi::LogicalSize;
 use winit::error::{EventLoopError, OsError};
 use winit::event;
 use winit::event::{Event, WindowEvent};
+use winit::event::WindowEvent::RedrawRequested;
 use winit::event_loop::{EventLoop, EventLoopWindowTarget};
 use winit::window::{Window, WindowBuilder};
+use crate::rendering::RenderingQueue;
 
 use super::ApplicationError;
 
 #[derive(Debug)]
 pub struct ApplicationWindow {
     window: Window,
-    event_loop: EventLoop<()>
+    event_loop: EventLoop<()>,
+    rendering_queue: RenderingQueue
 }
 
 impl ApplicationWindow {
@@ -22,9 +25,14 @@ impl ApplicationWindow {
             .with_inner_size(LogicalSize::new(1024, 768))
             .build(&event_loop)?;
 
+        let rendering_queue = unsafe {
+            RenderingQueue::new(&window)?
+        };
+
         Result::Ok(Self {
             window,
-            event_loop
+            event_loop,
+            rendering_queue
         })
     }
 

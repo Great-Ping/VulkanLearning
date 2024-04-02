@@ -1,17 +1,26 @@
+use std::collections::{HashMap, HashSet};
+use core::ffi::c_char;
 use vulkanalia::Entry;
 use vulkanalia::loader::LibloadingLoader;
 use vulkanalia::loader::LIBRARY;
 use vulkanalia::window::get_required_instance_extensions;
 
+//Что-о-о-о?
+use vulkanalia::{
+    Instance, // Обертка инстанса вулкана
+    Device,
+};
+
 use vulkanalia::vk;
-use vulkanalia::vk::HasBuilder;
+use vulkanalia::vk::{EntryV1_0, HasBuilder};
 use vulkanalia::vk::make_version;
 use vulkanalia::vk::{
     // Шаг первый, выбор экземпляра
-    Instance,
+    // Instance, -> из вулканалии
+    InstanceCreateFlags,
     PhysicalDevice,
     // Шаг второй, выбор логических устройств и очередей
-    Device,
+    // Device, -> из вулканалии
     Queue,
     // Шаг третий, поверхность окна и цепочка подкачки
     SurfaceKHR,
@@ -38,6 +47,12 @@ use vulkanalia::vk::{
 
 
 use winit::raw_window_handle::HasWindowHandle;
+use super::{VALIDATION_ENABLED, VALIDATION_LAYER};
+use super::CreateInstanceError;
+use super::CreateInstanceError::{
+    VulkanError,
+    LayersError
+};
 
 /**
 Чтобы нарисовать простой треугольник
@@ -49,7 +64,7 @@ use winit::raw_window_handle::HasWindowHandle;
 pub unsafe fn create_instance(
     window: &dyn HasWindowHandle,
     entry: &Entry
-) -> Result<vulkanalia::Instance, vk::ErrorCode> {
+) -> Result<Instance, CreateInstanceError> {
 
     let application_info = ApplicationInfo::builder()
         .application_name(b"Vulkan Learning\0")
@@ -64,11 +79,45 @@ pub unsafe fn create_instance(
         .map(|extension|extension.as_ptr())
         .collect::<Vec<_>>();
 
+    //Не для мака ягодка делана, нет флагов для поддержки мака
+
     let create_info = InstanceCreateInfo::builder()
         .application_info(&application_info)
-        .enabled_extension_names(&extensinos)
-        //.enabled_layer_count(0)
+        .enabled_extension_names(&get_extensions(window)?)
+        .enabled_layer_names(&get_layers(&entry)?)
+        .flags(InstanceCreateFlags::empty())
         .build();
 
-    return Result::Ok(entry.create_instance(&create_info, None)?);
+    Result::Ok(
+        entry.create_instance(&create_info, None)?
+    )
+}
+
+unsafe fn get_extensions(
+    window: &dyn HasWindowHandle
+) -> Result<Vec<*const c_char>, CreateInstanceError> {
+    let extensions = get_required_instance_extensions(window)
+        .iter()
+        .map(|extension|extension.as_ptr())
+        .collect::<Vec<_>>();
+
+    Result::Ok(extensions)
+}
+
+unsafe fn get_layers(
+    entry: &Entry
+) -> Result<Vec<*const c_char>, CreateInstanceError>{
+    let available_layers = entry
+        .enumerate_instance_layer_properties()?
+        .iter()
+        .map(|layer| layer.layer_name)
+        .collect::<HashSet<_>>();
+
+    if !VALIDATION_ENABLED {
+        Result::Ok(Vec::new())
+    } else if available_layers.contains(&VALIDATION_LAYER) {
+        Result::Ok(vec![VALIDATION_LAYER.as_ptr()])
+    } else {
+        Result::Err(LayersError())
+    }
 }
