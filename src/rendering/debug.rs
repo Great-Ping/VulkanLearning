@@ -1,4 +1,5 @@
 use std::ffi::{c_void, CStr};
+use log::{debug, error, info, trace, warn};
 use vulkanalia::{Instance, vk};
 use vulkanalia::vk::{Bool32, DebugUtilsMessengerCreateInfoEXT, DebugUtilsMessengerEXT, ExtDebugUtilsExtension, ExtensionName};
 use vulkanalia::vk::{
@@ -37,13 +38,15 @@ pub extern "system" fn debug_callback(
         CStr::from_ptr(data.message)
     }.to_string_lossy();
 
-
-    // if severity >= SeverityFlagsEXT::ERROR {
-    // } else if severity >= SeverityFlagsEXT::WARNING {
-    // } else if severity >= SeverityFlagsEXT::INFO {
-    // } else {
-    // }
-    println!("({:?}) {}", type_flags, message);
+    if severity >= SeverityFlagsEXT::ERROR {
+        error!("({:?}) {}", type_flags, message);
+    } else if severity >= SeverityFlagsEXT::WARNING {
+        warn!("({:?}) {}", type_flags, message);
+    } else if severity >= SeverityFlagsEXT::INFO {
+        debug!("({:?}) {}", type_flags, message)
+    } else /*if severity >= SeverityFlagsEXT::VERBOSE*/{
+        trace!("({:?}) {}", type_flags, message)
+    }
 
     return vk::FALSE;
 }

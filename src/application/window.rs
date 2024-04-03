@@ -1,3 +1,4 @@
+use log::{debug, info};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{EventLoop, EventLoopWindowTarget};
@@ -29,6 +30,7 @@ impl ApplicationWindow {
     }
 
     pub fn run(self) -> Result<(), ApplicationError>{
+        debug!("Starting main loop");
         self.event_loop.run(|event: Event<()>, target_window:&EventLoopWindowTarget<()>|{
             match event {
                 Event::AboutToWait => self.window.request_redraw(),

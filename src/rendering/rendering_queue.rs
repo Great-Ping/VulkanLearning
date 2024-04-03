@@ -1,3 +1,5 @@
+use std::any::Any;
+use log::debug;
 use winit::raw_window_handle::HasWindowHandle;
 use vulkanalia::Entry;
 use vulkanalia::loader::{
@@ -58,6 +60,6 @@ impl Drop for RenderingQueue{
             }
             self.instance.destroy_instance(None);
         }
-        println!("droped");
+        debug!("instance destroyed");
     }
 }

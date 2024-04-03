@@ -1,19 +1,29 @@
 use application::ApplicationWindow;
 use crate::rendering::RenderingQueue;
+use simple_logger::SimpleLogger;
+use log::{debug, warn};
+
 
 mod application;
 mod rendering;
 
 fn main(){
+    SimpleLogger::new()
+        .with_colors(true)
+        .without_timestamps()
+        .init()
+        .expect("logger initialization exception");
+
     let window =
         ApplicationWindow::new()
-            .unwrap();
+            .expect("window creation exception");
 
     let rendering_queue = unsafe {
         RenderingQueue::new(&window)
-            .unwrap()
+            .expect("rendering exception")
     };
 
-    window.run().unwrap();
+    window.run()
+        .expect("main loop exception");
 
 } // drop(str2);
