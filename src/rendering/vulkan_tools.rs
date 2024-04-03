@@ -10,7 +10,7 @@ use vulkanalia::{
 };
 
 use vulkanalia::vk;
-use vulkanalia::vk::{EntryV1_0, HasBuilder};
+use vulkanalia::vk::{Cast, DebugUtilsMessengerEXT, EntryV1_0, ExtDebugUtilsExtension, ExtendsInstanceCreateInfo, HasBuilder, InputChainStruct};
 use vulkanalia::vk::make_version;
 use vulkanalia::vk::{
     // Шаг первый, выбор экземпляра
@@ -45,7 +45,12 @@ use vulkanalia::vk::{
 
 
 use winit::raw_window_handle::HasWindowHandle;
-use super::{VALIDATION_ENABLED, VALIDATION_LAYER};
+use super::exceptions::CreateInstanceError::CreateDebuggerError;
+use super::{
+    get_debug_info,
+    VALIDATION_ENABLED,
+    VALIDATION_LAYER
+};
 use super::CreateInstanceError;
 use super::CreateInstanceError::{
     VulkanError,
@@ -59,10 +64,12 @@ use super::CreateInstanceError::{
 Нарисуйте 3 вершины
 Завершите прохождение рендеринга **/
 
-pub unsafe fn create_instance(
+pub unsafe fn create_instance<'b, T>(
     window: &dyn HasWindowHandle,
-    entry: &Entry
-) -> Result<Instance, CreateInstanceError> {
+    entry: &Entry,
+    next: &'b mut Option<impl Cast<Target = T>>
+) -> Result<Instance, CreateInstanceError>
+where T : ExtendsInstanceCreateInfo {
 
     let application_info = ApplicationInfo::builder()
         .application_name(b"Vulkan Learning\0")
@@ -72,29 +79,37 @@ pub unsafe fn create_instance(
         .api_version(make_version(1, 0, 0))
         .build();
 
-    let extensinos = get_extensions(window)?;
+    let extensions = get_extensions(window)?;
     let layers = get_layers(entry)?;
     //Не для мака ягодка делана, нет флагов для поддержки мака
 
-    let create_info = InstanceCreateInfo::builder()
+    let mut instance_info = InstanceCreateInfo::builder()
         .application_info(&application_info)
-        .enabled_extension_names(&extensinos)
+        .enabled_extension_names(&extensions)
         .enabled_layer_names(&layers)
-        .flags(InstanceCreateFlags::empty())
-        .build();
+        .flags(InstanceCreateFlags::empty());
 
-    Result::Ok(
-        entry.create_instance(&create_info, None)?
-    )
+    if let Some(next) = next{
+        instance_info = instance_info.push_next(next);
+    }
+    let mut instance_info = instance_info.build();
+
+    let instance = entry.create_instance(&instance_info, None)?;
+
+    Result::Ok(instance)
 }
 
 unsafe fn get_extensions(
     window: &dyn HasWindowHandle
 ) -> Result<Vec<*const c_char>, CreateInstanceError> {
-    let extensions = get_required_instance_extensions(window)
+    let mut extensions = get_required_instance_extensions(window)
         .iter()
         .map(|extension|extension.as_ptr())
         .collect::<Vec<_>>();
+
+    if VALIDATION_ENABLED {
+        extensions.push(vk::EXT_DEBUG_UTILS_EXTENSION.name.as_ptr())
+    }
 
     Result::Ok(extensions)
 }
@@ -113,6 +128,6 @@ unsafe fn get_layers(
     } else if available_layers.contains(&VALIDATION_LAYER) {
         Result::Ok(vec![VALIDATION_LAYER.as_ptr()])
     } else {
-        Result::Err(LayersError())
+        Result::Err(LayersError)
     }
 }

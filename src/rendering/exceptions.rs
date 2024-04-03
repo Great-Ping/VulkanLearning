@@ -1,14 +1,9 @@
-use vulkanalia::loader::LoaderError;
 use vulkanalia::vk;
-use winit::error::EventLoopError;
-use crate::application::ApplicationError;
-use vulkanalia::vk::ErrorCode;
-use log::error;
 
 #[derive(Debug)]
 pub enum RenderingQueueError{
     LibLoadingError(libloading::Error),
-    EntryCreateError(),
+    EntryCreateError,
     CreateInstanceError(CreateInstanceError),
 }
 
@@ -27,7 +22,8 @@ impl From<CreateInstanceError> for RenderingQueueError {
 #[derive(Debug)]
 pub enum CreateInstanceError{
     VulkanError(vk::ErrorCode),
-    LayersError()
+    LayersError,
+    CreateDebuggerError
 }
 
 impl From<vk::ErrorCode> for CreateInstanceError{

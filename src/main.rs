@@ -1,13 +1,19 @@
-use libloading::Error;
 use application::ApplicationWindow;
-use rendering::RenderingQueue;
-use crate::application::ApplicationError;
+use crate::rendering::RenderingQueue;
 
 mod application;
 mod rendering;
 
 fn main(){
-    let window = ApplicationWindow::new().unwrap();
-    //window.run();
+    let window =
+        ApplicationWindow::new()
+            .unwrap();
+
+    let rendering_queue = unsafe {
+        RenderingQueue::new(&window)
+            .unwrap()
+    };
+
+    window.run().unwrap();
 
 } // drop(str2);
