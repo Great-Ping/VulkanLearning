@@ -1,8 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use core::ffi::c_char;
 use vulkanalia::Entry;
-use vulkanalia::loader::LibloadingLoader;
-use vulkanalia::loader::LIBRARY;
 use vulkanalia::window::get_required_instance_extensions;
 
 //Что-о-о-о?
@@ -74,17 +72,14 @@ pub unsafe fn create_instance(
         .api_version(make_version(1, 0, 0))
         .build();
 
-    let extensinos = get_required_instance_extensions(window)
-        .iter()
-        .map(|extension|extension.as_ptr())
-        .collect::<Vec<_>>();
-
+    let extensinos = get_extensions(window)?;
+    let layers = get_layers(entry)?;
     //Не для мака ягодка делана, нет флагов для поддержки мака
 
     let create_info = InstanceCreateInfo::builder()
         .application_info(&application_info)
-        .enabled_extension_names(&get_extensions(window)?)
-        .enabled_layer_names(&get_layers(&entry)?)
+        .enabled_extension_names(&extensinos)
+        .enabled_layer_names(&layers)
         .flags(InstanceCreateFlags::empty())
         .build();
 
