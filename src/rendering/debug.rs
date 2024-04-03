@@ -52,7 +52,7 @@ pub extern "system" fn debug_callback(
 }
 
 
-pub fn get_debug_info() -> Option<CreateInfoEXT>{
+pub fn get_debug_info() -> Option<CreateInfoEXT> {
     if !VALIDATION_ENABLED{
         return None
     }

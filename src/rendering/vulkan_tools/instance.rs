@@ -46,7 +46,7 @@ use vulkanalia::vk::{
 
 use winit::raw_window_handle::HasWindowHandle;
 use super::exceptions::CreateInstanceError::CreateDebuggerError;
-use super::{
+use crate::rendering::{
     get_debug_info,
     VALIDATION_ENABLED,
     VALIDATION_LAYER
@@ -69,7 +69,7 @@ pub unsafe fn create_instance<'b, T>(
     entry: &Entry,
     next: &'b mut Option<impl Cast<Target = T>>
 ) -> Result<Instance, CreateInstanceError>
-where T : ExtendsInstanceCreateInfo {
+    where T : ExtendsInstanceCreateInfo {
 
     let application_info = ApplicationInfo::builder()
         .application_name(b"Vulkan Learning\0")
@@ -98,6 +98,7 @@ where T : ExtendsInstanceCreateInfo {
 
     Result::Ok(instance)
 }
+
 
 unsafe fn get_extensions(
     window: &dyn HasWindowHandle
@@ -131,3 +132,4 @@ unsafe fn get_layers(
         Result::Err(LayersError)
     }
 }
+

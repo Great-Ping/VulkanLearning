@@ -1,4 +1,5 @@
 use vulkanalia::vk;
+use super::vulkan_tools::CreateInstanceError;
 
 #[derive(Debug)]
 pub enum RenderingQueueError{
@@ -16,18 +17,5 @@ impl From<libloading::Error> for RenderingQueueError {
 impl From<CreateInstanceError> for RenderingQueueError {
     fn from(error: CreateInstanceError) -> Self {
         RenderingQueueError::CreateInstanceError(error)
-    }
-}
-
-#[derive(Debug)]
-pub enum CreateInstanceError{
-    VulkanError(vk::ErrorCode),
-    LayersError,
-    CreateDebuggerError
-}
-
-impl From<vk::ErrorCode> for CreateInstanceError{
-    fn from (error: vk::ErrorCode) -> Self {
-        CreateInstanceError::VulkanError(error)
     }
 }

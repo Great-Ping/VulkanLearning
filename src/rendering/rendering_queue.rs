@@ -8,13 +8,14 @@ use vulkanalia::loader::{
 };
 use vulkanalia::Instance;
 use vulkanalia::vk::{DebugUtilsMessengerCreateInfoEXT, DebugUtilsMessengerEXT, ExtDebugUtilsExtension, InstanceV1_0};
-use crate::rendering::CreateInstanceError::CreateDebuggerError;
 
+use super::vulkan_tools::CreateInstanceError::{
+    CreateDebuggerError
+};
 use super::RenderingQueueError::{
     EntryCreateError
 };
 use super::{
-    CreateInstanceError,
     RenderingQueueError,
     VALIDATION_ENABLED,
     get_debug_info,
@@ -43,6 +44,8 @@ impl RenderingQueue {
         let mut debug_info = get_debug_info();
         let instance = create_instance(window, &entry, &mut debug_info)?;
         let messenger = create_messenger(&instance, &debug_info);
+
+        let physical_device = pick_physical_device(&instance);
 
         Result::Ok(RenderingQueue{
             entry,
