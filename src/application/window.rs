@@ -1,12 +1,25 @@
-use log::{debug, info};
+use log::debug;
 use winit::dpi::LogicalSize;
-use winit::event::{Event, WindowEvent};
-use winit::event_loop::{EventLoop, EventLoopWindowTarget};
-use winit::raw_window_handle::{HandleError, HasWindowHandle, WindowHandle};
-use winit::window::{Window, WindowBuilder};
-use crate::rendering::RenderingQueue;
+use winit::event::{
+    Event,
+    WindowEvent
+};
+use winit::event_loop::{
+    EventLoop,
+    EventLoopWindowTarget
+};
+use winit::window::{
+    Window,
+    WindowBuilder
+};
+use winit::raw_window_handle::{
+    HandleError,
+    HasWindowHandle,
+    WindowHandle
+};
 
 use super::ApplicationError;
+use crate::rendering::RenderingQueue;
 
 #[derive(Debug)]
 pub struct ApplicationWindow {

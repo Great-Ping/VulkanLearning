@@ -1,4 +1,3 @@
-use std::any::Any;
 use log::debug;
 use winit::raw_window_handle::HasWindowHandle;
 use vulkanalia::Entry;
@@ -7,17 +6,13 @@ use vulkanalia::loader::{
     LIBRARY
 };
 use vulkanalia::Instance;
-use vulkanalia::vk::{DebugUtilsMessengerCreateInfoEXT, DebugUtilsMessengerEXT, ExtDebugUtilsExtension, InstanceV1_0};
+use vulkanalia::vk::{DebugUtilsMessengerEXT, ExtDebugUtilsExtension, InstanceV1_0};
 
-use super::vulkan_tools::CreateInstanceError::{
-    CreateDebuggerError
-};
 use super::RenderingQueueError::{
     EntryCreateError
 };
 use super::{
     RenderingQueueError,
-    VALIDATION_ENABLED,
     get_debug_info,
     create_messenger
 };
@@ -44,8 +39,6 @@ impl RenderingQueue {
         let mut debug_info = get_debug_info();
         let instance = create_instance(window, &entry, &mut debug_info)?;
         let messenger = create_messenger(&instance, &debug_info);
-
-        let physical_device = pick_physical_device(&instance);
 
         Result::Ok(RenderingQueue{
             entry,

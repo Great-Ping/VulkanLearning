@@ -1,8 +1,6 @@
 use application::ApplicationWindow;
 use crate::rendering::RenderingQueue;
 use simple_logger::SimpleLogger;
-use log::{debug, warn};
-
 
 mod application;
 mod rendering;

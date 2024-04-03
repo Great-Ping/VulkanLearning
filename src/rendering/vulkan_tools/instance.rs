@@ -1,68 +1,31 @@
 use std::collections::HashSet;
 use core::ffi::c_char;
+
 use vulkanalia::Entry;
 use vulkanalia::window::get_required_instance_extensions;
-
-//Что-о-о-о?
-use vulkanalia::{
-    Instance, // Обертка инстанса вулкана
-    Device,
-};
-
-use vulkanalia::vk;
-use vulkanalia::vk::{Cast, DebugUtilsMessengerEXT, EntryV1_0, ExtDebugUtilsExtension, ExtendsInstanceCreateInfo, HasBuilder, InputChainStruct};
-use vulkanalia::vk::make_version;
-use vulkanalia::vk::{
-    // Шаг первый, выбор экземпляра
-    // Instance, -> из вулканалии
-    InstanceCreateFlags,
-    PhysicalDevice,
-    // Шаг второй, выбор логических устройств и очередей
-    // Device, -> из вулканалии
-    Queue,
-    // Шаг третий, поверхность окна и цепочка подкачки
-    SurfaceKHR,
-    SwapchainKHR,
-    // Шаг четвертый, просмотр изображений и фреймбуферы
-    ImageView,
-    Framebuffer,// Шаг пятный, проходы ренедеринга
-    // Шаг шестой, графический конвеер (создается для каждого изменения с нуля)
-    Pipeline,
-    ShaderModule,
-    // Шаг седьмой, пулы команд и командные буферы
-    CommandBuffer,
-    CommandPool,
-    // Шаг восьмой, основной цикл
-    AcquireNextImageInfoKHR,
-    // получение изображения из цепочки подкачки
-    // Выбираем буффер комманд и выполняем queuesubmit
-
-    // Возвращаем изображение в цепчочку подкачки, для представления с помощь
-    // vk::QueuePresentKHR
-    InstanceCreateInfo,
-    ApplicationInfo
-};
-
-
 use winit::raw_window_handle::HasWindowHandle;
-use super::exceptions::CreateInstanceError::CreateDebuggerError;
+
+use vulkanalia::Instance;
+use vulkanalia::vk;
+use vulkanalia::vk::{
+    Cast,
+    EntryV1_0,
+    HasBuilder,
+    InstanceCreateFlags,
+    InstanceCreateInfo,
+    ApplicationInfo,
+    ExtendsInstanceCreateInfo,
+    make_version,
+};
+
 use crate::rendering::{
-    get_debug_info,
     VALIDATION_ENABLED,
     VALIDATION_LAYER
 };
 use super::CreateInstanceError;
 use super::CreateInstanceError::{
-    VulkanError,
     LayersError
 };
-
-/**
-Чтобы нарисовать простой треугольник
-Начинаем прохождение рендеринга
-Привязка графического конвейера
-Нарисуйте 3 вершины
-Завершите прохождение рендеринга **/
 
 pub unsafe fn create_instance<'b, T>(
     window: &dyn HasWindowHandle,
@@ -92,8 +55,8 @@ pub unsafe fn create_instance<'b, T>(
     if let Some(next) = next{
         instance_info = instance_info.push_next(next);
     }
-    let mut instance_info = instance_info.build();
 
+    let instance_info = instance_info.build();
     let instance = entry.create_instance(&instance_info, None)?;
 
     Result::Ok(instance)

@@ -1,6 +1,6 @@
 use winit::error::{EventLoopError, OsError};
 
-use crate::rendering::{RenderingQueue, RenderingQueueError};
+use crate::rendering::RenderingQueueError;
 
 #[derive(Debug)]
 pub enum ApplicationError{

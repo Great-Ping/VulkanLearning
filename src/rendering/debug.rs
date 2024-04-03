@@ -1,5 +1,5 @@
 use std::ffi::{c_void, CStr};
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, trace, warn};
 use vulkanalia::{Instance, vk};
 use vulkanalia::vk::{Bool32, DebugUtilsMessengerCreateInfoEXT, DebugUtilsMessengerEXT, ExtDebugUtilsExtension, ExtensionName};
 use vulkanalia::vk::{
