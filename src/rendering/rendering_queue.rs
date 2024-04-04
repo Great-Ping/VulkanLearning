@@ -6,7 +6,7 @@ use vulkanalia::loader::{
     LIBRARY
 };
 use vulkanalia::Instance;
-use vulkanalia::vk::{DebugUtilsMessengerEXT, ExtDebugUtilsExtension, InstanceV1_0};
+use vulkanalia::vk::{DebugUtilsMessengerEXT, ExtDebugUtilsExtension, InstanceV1_0, PhysicalDevice};
 
 use super::RenderingQueueError::{
     EntryCreateError
@@ -16,15 +16,14 @@ use super::{
     get_debug_info,
     create_messenger
 };
-use super::vulkan_tools::{
-    create_instance
-};
+use super::vulkan_tools::{create_instance, pick_physical_device};
 
 #   [derive(Debug)]
 pub struct RenderingQueue{
     entry: Entry,
     instance: Instance,
-    messenger: Option<DebugUtilsMessengerEXT>
+    messenger: Option<DebugUtilsMessengerEXT>,
+    physical_device: PhysicalDevice
 }
 
 impl RenderingQueue {
@@ -39,11 +38,13 @@ impl RenderingQueue {
         let mut debug_info = get_debug_info();
         let instance = create_instance(window, &entry, &mut debug_info)?;
         let messenger = create_messenger(&instance, &debug_info);
+        let physical_device = pick_physical_device(&instance)?;
 
         Result::Ok(RenderingQueue{
             entry,
             instance,
-            messenger
+            messenger,
+            physical_device
         })
     }
 }

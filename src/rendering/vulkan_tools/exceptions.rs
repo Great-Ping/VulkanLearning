@@ -2,13 +2,13 @@ use vulkanalia::vk;
 
 #[derive(Debug)]
 pub enum CreateInstanceError{
-    VulkanError(vk::ErrorCode),
     LayersError,
+    EntryError,
     CreateDebuggerError
 }
 
-impl From<vk::ErrorCode> for CreateInstanceError{
-    fn from (error: vk::ErrorCode) -> Self {
-        CreateInstanceError::VulkanError(error)
-    }
+#[derive(Debug)]
+pub enum PickPhysicalDeviceError{
+    SuitableDeviceNotFound,
+    SuitabilityError (&'static str)
 }

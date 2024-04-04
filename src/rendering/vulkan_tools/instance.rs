@@ -24,6 +24,7 @@ use crate::rendering::{
 };
 use super::CreateInstanceError;
 use super::CreateInstanceError::{
+    EntryError,
     LayersError
 };
 
@@ -57,7 +58,8 @@ pub unsafe fn create_instance<'b, T>(
     }
 
     let instance_info = instance_info.build();
-    let instance = entry.create_instance(&instance_info, None)?;
+    let instance = entry.create_instance(&instance_info, None)
+        .map_err(|err| EntryError)?;
 
     Result::Ok(instance)
 }
@@ -81,8 +83,11 @@ unsafe fn get_extensions(
 unsafe fn get_layers(
     entry: &Entry
 ) -> Result<Vec<*const c_char>, CreateInstanceError>{
-    let available_layers = entry
-        .enumerate_instance_layer_properties()?
+    let layers = entry
+        .enumerate_instance_layer_properties()
+        .map_err(|err| LayersError)?;
+
+    let available_layers = layers
         .iter()
         .map(|layer| layer.layer_name)
         .collect::<HashSet<_>>();
