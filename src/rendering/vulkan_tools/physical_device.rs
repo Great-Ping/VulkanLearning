@@ -1,5 +1,5 @@
 use log::{debug, error, info};
-use vulkanalia::{Instance, vk};
+use vulkanalia::{Device, Instance, vk};
 use vulkanalia::prelude::v1_0::InstanceV1_0;
 use vulkanalia::vk::{
     PhysicalDevice,
@@ -18,6 +18,7 @@ use super::PickPhysicalDeviceError::{
 
 #[derive(Debug)]
 pub struct PhysicalDeviceInfo{
+    pub device: PhysicalDevice,
     properties: PhysicalDeviceProperties,
     features: PhysicalDeviceFeatures,
     queue_family_properties: Vec<QueueFamilyProperties>
@@ -39,6 +40,7 @@ impl PhysicalDeviceInfo{
             .get_physical_device_queue_family_properties(device);
 
         return Self {
+            device,
             properties: device_properties,
             features: device_features,
             queue_family_properties: queue_properties
@@ -56,6 +58,10 @@ impl PhysicalDeviceInfo{
                         flags
                     )
             ).map(|index| index as u32)
+    }
+
+    pub fn get_present_queue(&self) {
+
     }
 
     fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{
@@ -78,7 +84,7 @@ impl PhysicalDeviceInfo{
 
 pub unsafe fn pick_physical_device(
     instance: &Instance
-)-> Result<PhysicalDevice, PickPhysicalDeviceError> {
+)-> Result<PhysicalDeviceInfo, PickPhysicalDeviceError> {
     let devices =  instance
         .enumerate_physical_devices()
         .map_err(|err| SuitableDeviceNotFound)?;
@@ -88,7 +94,7 @@ pub unsafe fn pick_physical_device(
         let device_info = PhysicalDeviceInfo::create(&instance, device);
         if device_info.check().is_ok() {
             info!("Picked physucal device {}", device_info.properties.device_name);
-            return Result::Ok(device);
+            return Result::Ok(device_info);
         }
     }
 

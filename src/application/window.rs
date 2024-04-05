@@ -12,11 +12,7 @@ use winit::window::{
     Window,
     WindowBuilder
 };
-use winit::raw_window_handle::{
-    HandleError,
-    HasWindowHandle,
-    WindowHandle
-};
+use winit::raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
 
 use super::ApplicationError;
 use crate::rendering::RenderingQueue;
@@ -76,5 +72,11 @@ fn processing_window_event(
 impl HasWindowHandle for ApplicationWindow {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         self.window.window_handle()
+    }
+}
+
+impl HasDisplayHandle for ApplicationWindow {
+    fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
+        self.window.display_handle()
     }
 }

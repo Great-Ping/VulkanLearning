@@ -1,5 +1,5 @@
 use log::debug;
-use winit::raw_window_handle::HasWindowHandle;
+use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use vulkanalia::Entry;
 use vulkanalia::loader::{
     LibloadingLoader,
@@ -10,13 +10,12 @@ use vulkanalia::{
     Instance,
     Device
 };
-use vulkanalia::vk::{DebugUtilsMessengerEXT, DeviceV1_0, ExtDebugUtilsExtension, InstanceV1_0, PhysicalDevice};
-
+use vulkanalia::window::create_surface;
+use vulkanalia::vk::{DebugUtilsMessengerEXT, DeviceV1_0, ExtDebugUtilsExtension, InstanceV1_0, KhrSurfaceExtension, PhysicalDevice, SurfaceKHR};
+use super::RenderingQueueError;
 use super::RenderingQueueError::{
-    EntryCreateError
-};
-use super::{
-    RenderingQueueError,
+    EntryCreateError,
+    CreateSurfaceError
 };
 use super::vulkan_tools::{
     get_debug_info,
@@ -36,41 +35,43 @@ pub struct RenderingQueue{
     messenger: Option<DebugUtilsMessengerEXT>,
     physical_device: PhysicalDevice,
     logical_device: Device,
+    surface: SurfaceKHR
 }
 
 impl RenderingQueue {
-    pub unsafe fn new(
-        window: &dyn HasWindowHandle
-    ) -> Result<RenderingQueue, RenderingQueueError> {
+    pub unsafe fn new<TWindow>(
+        window: &TWindow
+    ) -> Result<RenderingQueue, RenderingQueueError>
+    where TWindow: HasWindowHandle+HasDisplayHandle{
 
         let loader = LibloadingLoader::new(LIBRARY)?;
         let entry = Entry::new(loader)
             .map_err(|err| EntryCreateError)?;
 
         let mut debug_info = get_debug_info();
-        let instance = create_instance(
-            window,
-            &entry,
-            &mut debug_info
-        )?;
-        let messenger = create_messenger(
-            &instance,
-            &debug_info
-        );
+        let instance = create_instance(window, &entry,&mut debug_info)?;
+        let messenger = create_messenger(&instance, &debug_info);
 
-        let physical_device = pick_physical_device(&instance)?;
+        let window_surface = create_surface(&instance, &window, &window)
+            .map_err(|err| CreateSurfaceError(err))?;
+
+        let physical_device_info = pick_physical_device(&instance)?;
+        let physical_device = physical_device_info.device;
+
         let logical_device = create_logical_device(
             &entry,
             &instance,
-            physical_device,
+            &physical_device_info,
         )?;
+
 
         Result::Ok(RenderingQueue{
             entry,
             instance,
             messenger,
             physical_device,
-            logical_device
+            logical_device,
+            surface: window_surface
         })
     }
 }
@@ -81,6 +82,7 @@ impl Drop for RenderingQueue{
             if let Some(messenger) = self.messenger {
                 self.instance.destroy_debug_utils_messenger_ext(messenger, None);
             }
+            self.instance.destroy_surface_khr(self.surface, None);
             self.logical_device.destroy_device(None);
             self.instance.destroy_instance(None);
         }

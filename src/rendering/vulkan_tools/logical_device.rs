@@ -7,7 +7,12 @@ use vulkanalia::vk::{
     PhysicalDevice,
     PhysicalDeviceFeatures,
 };
-use vulkanalia::{Entry, Instance, Device, vk};
+use vulkanalia::{
+    Entry,
+    Instance,
+    Device,
+    vk
+};
 use super::CreateLogicalDeviceError::{
     CreateDeviceError
 };
@@ -21,9 +26,8 @@ use super::{
 pub unsafe fn create_logical_device(
     entry: &Entry,
     instance: &Instance,
-    physical_device: PhysicalDevice,
+    physical_device_info: &PhysicalDeviceInfo,
 ) -> Result<Device, CreateLogicalDeviceError> {
-    let physical_device_info = PhysicalDeviceInfo::create(&instance, physical_device);
     let queue_index = physical_device_info
         .get_queue_index(QueueFlags::GRAPHICS).unwrap();
 
@@ -45,7 +49,7 @@ pub unsafe fn create_logical_device(
         .enabled_extension_names(&extensions)
         .enabled_features(&features);
 
-    let device = instance.create_device(physical_device, &device_info, None)
+    let device = instance.create_device(physical_device_info.device, &device_info, None)
         .map_err(|err|CreateDeviceError(err))?;
 
     Result::Ok(device)

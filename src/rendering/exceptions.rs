@@ -1,4 +1,5 @@
 use vulkanalia::vk;
+use vulkanalia::vk::ErrorCode;
 use super::vulkan_tools::{CreateInstanceError, CreateLogicalDeviceError};
 use super::vulkan_tools::PickPhysicalDeviceError;
 
@@ -8,7 +9,8 @@ pub enum RenderingQueueError{
     EntryCreateError,
     CreateInstanceError(CreateInstanceError),
     PeckPhysicalDeviceError(PickPhysicalDeviceError),
-    CreateLogicalDeviceError(CreateLogicalDeviceError)
+    CreateLogicalDeviceError(CreateLogicalDeviceError),
+    CreateSurfaceError(ErrorCode)
 }
 
 impl From<libloading::Error> for RenderingQueueError {
