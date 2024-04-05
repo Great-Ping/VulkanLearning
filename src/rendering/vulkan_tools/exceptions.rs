@@ -19,3 +19,7 @@ pub enum CreateLogicalDeviceError {
     CreateDeviceError(ErrorCode),
     CreateQueueError
 }
+
+pub enum CreateSwapchainSupportError{
+    VulkanError(ErrorCode),
+}

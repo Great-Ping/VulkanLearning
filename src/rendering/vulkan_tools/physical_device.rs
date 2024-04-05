@@ -6,19 +6,9 @@ use vulkanalia::{
     vk
 };
 use vulkanalia::prelude::v1_0::InstanceV1_0;
-use vulkanalia::vk::{
-    ExtensionProperties,
-    KhrSurfaceExtension,
-    PhysicalDevice,
-    PhysicalDeviceFeatures,
-    PhysicalDeviceProperties,
-    PhysicalDeviceType,
-    QueueFamilyProperties,
-    QueueFlags,
-    SurfaceKHR
-};
+use vulkanalia::vk::{ExtensionProperties, KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR, SwapchainKHR};
 
-use super::{PickPhysicalDeviceError, REQUIRED_EXTENSIONS};
+use super::{PickPhysicalDeviceError, REQUIRED_EXTENSIONS, SwapchainSupport};
 use super::PickPhysicalDeviceError::{
     SuitableDeviceNotFound,
     SuitabilityError
@@ -99,7 +89,32 @@ impl<'a> PhysicalDeviceInfo<'a> {
         return None;
     }
 
-    unsafe fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{
+    unsafe fn check(&self, surface: &SurfaceKHR) ->  Result<(), PickPhysicalDeviceError>{
+        self.check_physical_device()?;
+        self.check_extensions_support()?;
+        self.check_swapchain_support(surface)?;
+
+        Result::Ok(())
+    }
+
+    unsafe fn check_swapchain_support(
+        &self,
+        surface: &SurfaceKHR
+    )->  Result<(), PickPhysicalDeviceError>{
+        let support = SwapchainSupport::create(
+            self.instance,
+            surface,
+            self.device
+        ).map_err(|err|SuitabilityError("swapchain is not supported"))?;
+
+        if support.formats.is_empty() || support.present_modes.is_empty(){
+            return Result::Err(SuitabilityError("swapchain is not supported"))
+        }
+
+        Result::Ok(())
+    }
+
+    fn check_physical_device(&self)->  Result<(), PickPhysicalDeviceError>{
         if self.properties.device_type != PhysicalDeviceType::DISCRETE_GPU {
             return Result::Err(SuitabilityError("device is not GPU."));
         }
@@ -111,13 +126,10 @@ impl<'a> PhysicalDeviceInfo<'a> {
         if let None = graphics_queue_index {
             return Result::Err(SuitabilityError("missing graphics queue"));
         }
-
-        return self.check_extensions_support();
+        Result::Ok(())
     }
 
-    unsafe fn check_extensions_support(
-        &self
-    ) -> Result<(), PickPhysicalDeviceError>{
+    unsafe fn check_extensions_support(&self) -> Result<(), PickPhysicalDeviceError>{
 
         let extensions = self.instance
             .enumerate_device_extension_properties(self.device.clone(), None)
@@ -135,12 +147,14 @@ impl<'a> PhysicalDeviceInfo<'a> {
             Result::Err(SuitabilityError("missing required device extensions"))
         }
     }
+
 }
 
 
-pub unsafe fn pick_physical_device(
-    instance: &Instance
-)-> Result<PhysicalDeviceInfo, PickPhysicalDeviceError> {
+pub unsafe fn pick_physical_device<'a>(
+    instance: &'a Instance,
+    surface: &SurfaceKHR
+)-> Result<PhysicalDeviceInfo<'a>, PickPhysicalDeviceError> {
     let devices =  instance
         .enumerate_physical_devices()
         .map_err(|err| SuitableDeviceNotFound)?;
@@ -148,8 +162,8 @@ pub unsafe fn pick_physical_device(
 
     for device in devices{
         let device_info = PhysicalDeviceInfo::create(&instance, device);
-        if device_info.check().is_ok() {
-            info!("Picked physucal device {}", device_info.properties.device_name);
+        if device_info.check(surface).is_ok() {
+            info!("Picked physical device {}", device_info.properties.device_name);
             return Result::Ok(device_info);
         }
     }

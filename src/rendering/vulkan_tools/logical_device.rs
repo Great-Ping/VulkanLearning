@@ -1,16 +1,27 @@
 use std::collections::HashSet;
 use std::ffi::c_char;
-use vulkanalia::vk::{HasBuilder, DeviceQueueCreateInfo, QueueFlags, DeviceCreateInfo, PhysicalDeviceFeatures, SurfaceKHR, ExtensionName};
+
 use vulkanalia::{Entry, Instance, Device, vk};
-use super::CreateLogicalDeviceError::{CreateDeviceError, CreateQueueError};
+use vulkanalia::vk::{
+    HasBuilder,
+    DeviceQueueCreateInfo,
+    QueueFlags,
+    DeviceCreateInfo,
+    PhysicalDeviceFeatures,
+    SurfaceKHR,
+    ExtensionName
+};
+
+use super::CreateLogicalDeviceError::{
+    CreateDeviceError,
+    CreateQueueError
+};
 use super::{
     CreateLogicalDeviceError,
     PhysicalDeviceInfo,
     VALIDATION_ENABLED,
     VALIDATION_LAYER
 };
-
-
 
 pub const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 

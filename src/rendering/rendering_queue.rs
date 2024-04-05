@@ -55,7 +55,10 @@ impl RenderingQueue {
         let window_surface = create_surface(&instance, &window, &window)
             .map_err(|err| CreateSurfaceError(err))?;
 
-        let physical_device_info = pick_physical_device(&instance)?;
+        let physical_device_info = pick_physical_device(
+            &instance,
+            &window_surface
+        )?;
         let physical_device = physical_device_info.device;
 
         let logical_device = create_logical_device(
