@@ -22,8 +22,8 @@ pub unsafe fn create_logical_device(
     entry: &Entry,
     instance: &Instance,
     physical_device: PhysicalDevice,
-    physical_device_info: &PhysicalDeviceInfo
 ) -> Result<Device, CreateLogicalDeviceError> {
+    let physical_device_info = PhysicalDeviceInfo::create(&instance, physical_device);
     let queue_index = physical_device_info
         .get_queue_index(QueueFlags::GRAPHICS).unwrap();
 

@@ -59,16 +59,10 @@ impl RenderingQueue {
         );
 
         let physical_device = pick_physical_device(&instance)?;
-        let physical_device_info = PhysicalDeviceInfo::create(
-            &instance,
-            &physical_device
-        );
-
         let logical_device = create_logical_device(
             &entry,
             &instance,
             physical_device,
-            &physical_device_info
         )?;
 
         Result::Ok(RenderingQueue{

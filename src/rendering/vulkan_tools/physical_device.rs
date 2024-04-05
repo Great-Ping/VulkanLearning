@@ -25,17 +25,15 @@ pub struct PhysicalDeviceInfo{
 impl PhysicalDeviceInfo{
     pub unsafe fn create(
         instance: &Instance,
-        device: &PhysicalDevice
+        device: PhysicalDevice
     ) -> Self {
-        //Нерушим же же будет принцип владения!
-        let device = device.clone();
         //Имя, тип, поддерживаемая версия вулкан
         let device_properties = instance
-            .get_physical_device_properties(device.clone());
+            .get_physical_device_properties(device);
         //Поддержка сжатия текстур,  64- битные переоды,
         //Ренедринг с несколькими видовыми экранами
         let device_features = instance
-            .get_physical_device_features(device.clone());
+            .get_physical_device_features(device);
 
         let queue_properties = instance
             .get_physical_device_queue_family_properties(device);
@@ -87,7 +85,7 @@ pub unsafe fn pick_physical_device(
 
 
     for device in devices{
-        let device_info = PhysicalDeviceInfo::create(&instance, &device);
+        let device_info = PhysicalDeviceInfo::create(&instance, device);
         if device_info.check().is_ok() {
             info!("Picked physucal device {}", device_info.properties.device_name);
             return Result::Ok(device);
