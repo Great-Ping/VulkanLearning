@@ -18,7 +18,7 @@ use vulkanalia::vk::{
     SurfaceKHR
 };
 
-use super::PickPhysicalDeviceError;
+use super::{PickPhysicalDeviceError, REQUIRED_EXTENSIONS};
 use super::PickPhysicalDeviceError::{
     SuitableDeviceNotFound,
     SuitabilityError
@@ -112,13 +112,12 @@ impl<'a> PhysicalDeviceInfo<'a> {
             return Result::Err(SuitabilityError("missing graphics queue"));
         }
 
-        return self.check_extensions();
+        return self.check_extensions_support();
     }
 
-    unsafe fn check_extensions(
+    unsafe fn check_extensions_support(
         &self
     ) -> Result<(), PickPhysicalDeviceError>{
-        const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
         let extensions = self.instance
             .enumerate_device_extension_properties(self.device.clone(), None)

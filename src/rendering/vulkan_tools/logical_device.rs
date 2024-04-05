@@ -1,18 +1,7 @@
 use std::collections::HashSet;
 use std::ffi::c_char;
-use vulkanalia::vk::{
-    HasBuilder,
-    DeviceQueueCreateInfo,
-    QueueFlags,
-    DeviceCreateInfo,
-    PhysicalDeviceFeatures,
-    SurfaceKHR
-};
-use vulkanalia::{
-    Entry,
-    Instance,
-    Device,
-};
+use vulkanalia::vk::{HasBuilder, DeviceQueueCreateInfo, QueueFlags, DeviceCreateInfo, PhysicalDeviceFeatures, SurfaceKHR, ExtensionName};
+use vulkanalia::{Entry, Instance, Device, vk};
 use super::CreateLogicalDeviceError::{CreateDeviceError, CreateQueueError};
 use super::{
     CreateLogicalDeviceError,
@@ -20,6 +9,10 @@ use super::{
     VALIDATION_ENABLED,
     VALIDATION_LAYER
 };
+
+
+
+pub const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
 pub unsafe fn create_logical_device(
     instance: &Instance,
@@ -32,7 +25,7 @@ pub unsafe fn create_logical_device(
     )?;
 
     let layers = get_layers();
-    let extensions =[];
+    let extensions = get_extensions();
     let features = PhysicalDeviceFeatures::builder()
         .build();
 
@@ -49,8 +42,14 @@ pub unsafe fn create_logical_device(
     Result::Ok(device)
 }
 
-unsafe fn get_layers(
-) -> Vec<*const c_char>{
+unsafe fn get_extensions() -> Vec<*const c_char> {
+    REQUIRED_EXTENSIONS
+        .iter()
+        .map(|name| name.as_ptr())
+        .collect::<Vec<_>>()
+}
+
+unsafe fn get_layers() -> Vec<*const c_char>{
     if VALIDATION_ENABLED {
         vec![VALIDATION_LAYER.as_ptr()]
     } else {
@@ -66,6 +65,7 @@ unsafe fn create_queue_infos(
     let graphics_queue_index = device_info
         .get_queue_index(QueueFlags::GRAPHICS)
         .ok_or(CreateQueueError)?;
+
     let present_queue_index = device_info
         .get_present_queue_index(surface)
         .ok_or(CreateQueueError)?;
