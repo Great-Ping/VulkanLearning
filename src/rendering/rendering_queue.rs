@@ -46,7 +46,7 @@ impl RenderingQueue {
 
         let loader = LibloadingLoader::new(LIBRARY)?;
         let entry = Entry::new(loader)
-            .map_err(|err| EntryCreateError)?;
+            .map_err(|_| EntryCreateError)?;
 
         let mut debug_info = get_debug_info();
         let instance = create_instance(window, &entry,&mut debug_info)?;
@@ -59,7 +59,6 @@ impl RenderingQueue {
         let physical_device = physical_device_info.device;
 
         let logical_device = create_logical_device(
-            &entry,
             &instance,
             &window_surface,
             &physical_device_info

@@ -1,8 +1,22 @@
 use std::collections::HashSet;
 use log::{debug, error, info};
-use vulkanalia::{Device, Instance, vk};
+use vulkanalia::{
+    Device,
+    Instance,
+    vk
+};
 use vulkanalia::prelude::v1_0::InstanceV1_0;
-use vulkanalia::vk::{ExtensionProperties, KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR};
+use vulkanalia::vk::{
+    ExtensionProperties,
+    KhrSurfaceExtension,
+    PhysicalDevice,
+    PhysicalDeviceFeatures,
+    PhysicalDeviceProperties,
+    PhysicalDeviceType,
+    QueueFamilyProperties,
+    QueueFlags,
+    SurfaceKHR
+};
 
 use super::PickPhysicalDeviceError;
 use super::PickPhysicalDeviceError::{
@@ -104,7 +118,7 @@ impl<'a> PhysicalDeviceInfo<'a> {
     unsafe fn check_extensions(
         &self
     ) -> Result<(), PickPhysicalDeviceError>{
-        const required_extensions: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
+        const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
         let extensions = self.instance
             .enumerate_device_extension_properties(self.device.clone(), None)
@@ -115,7 +129,7 @@ impl<'a> PhysicalDeviceInfo<'a> {
             .map(|extension| extension.extension_name)
             .collect::<HashSet<_>>();
 
-        if required_extensions.iter().all(|name|extensions.contains(name)) {
+        if REQUIRED_EXTENSIONS.iter().all(|name|extensions.contains(name)) {
             Result::Ok(())
         }
         else {

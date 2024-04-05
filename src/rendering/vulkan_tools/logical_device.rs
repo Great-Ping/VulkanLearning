@@ -12,7 +12,6 @@ use vulkanalia::{
     Entry,
     Instance,
     Device,
-    vk
 };
 use super::CreateLogicalDeviceError::{CreateDeviceError, CreateQueueError};
 use super::{
@@ -23,13 +22,11 @@ use super::{
 };
 
 pub unsafe fn create_logical_device(
-    entry: &Entry,
     instance: &Instance,
     surface: &SurfaceKHR,
     physical_device_info: &PhysicalDeviceInfo,
 ) -> Result<Device, CreateLogicalDeviceError> {
     let queue_infos = create_queue_infos(
-        instance,
         physical_device_info,
         surface
     )?;
@@ -63,7 +60,6 @@ unsafe fn get_layers(
 
 
 unsafe fn create_queue_infos(
-    instance: &Instance,
     device_info: &PhysicalDeviceInfo,
     surface: &SurfaceKHR
 ) -> Result<Vec<DeviceQueueCreateInfo>, CreateLogicalDeviceError> {
