@@ -18,7 +18,7 @@ use vulkanalia::vk::{
     make_version,
 };
 
-use crate::rendering::{
+use super::{
     VALIDATION_ENABLED,
     VALIDATION_LAYER
 };

@@ -17,7 +17,7 @@ use super::PickPhysicalDeviceError::{
 };
 
 #[derive(Debug)]
-struct PhysicalDeviceInfo{
+pub struct PhysicalDeviceInfo{
     properties: PhysicalDeviceProperties,
     features: PhysicalDeviceFeatures,
     queue_family_properties: Vec<QueueFamilyProperties>
@@ -47,6 +47,19 @@ impl PhysicalDeviceInfo{
         };
     }
 
+    pub fn get_queue_index(
+        &self, flags: QueueFlags
+    ) -> Option<u32> {
+        self.queue_family_properties
+            .iter()
+            .position(|propery|
+                propery.queue_flags
+                    .contains(
+                        flags
+                    )
+            ).map(|index| index as u32)
+    }
+
     fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{
         if self.properties.device_type != PhysicalDeviceType::DISCRETE_GPU {
             return Result::Err(SuitabilityError("device is not GPU."));
@@ -55,12 +68,8 @@ impl PhysicalDeviceInfo{
             return Result::Err(SuitabilityError("missing geometry shaders support."));
         }
 
-        let graphics = self.queue_family_properties
-            .iter()
-            .position(|propery| propery.queue_flags.contains(QueueFlags::GRAPHICS))
-            .map(|index| index as u32);
-
-        if let None = graphics {
+        let graphics_queue_index = self.get_queue_index(QueueFlags::GRAPHICS);
+        if let None = graphics_queue_index {
             return Result::Err(SuitabilityError("missing graphics queue"));
         }
 
