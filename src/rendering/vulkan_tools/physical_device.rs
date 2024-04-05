@@ -1,7 +1,8 @@
+use std::collections::HashSet;
 use log::{debug, error, info};
 use vulkanalia::{Device, Instance, vk};
 use vulkanalia::prelude::v1_0::InstanceV1_0;
-use vulkanalia::vk::{KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR};
+use vulkanalia::vk::{ExtensionProperties, KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR};
 
 use super::PickPhysicalDeviceError;
 use super::PickPhysicalDeviceError::{
@@ -10,15 +11,18 @@ use super::PickPhysicalDeviceError::{
 };
 
 #[derive(Debug)]
-pub struct PhysicalDeviceInfo{
+pub struct PhysicalDeviceInfo<'a> {
     pub device: PhysicalDevice,
+    instance: &'a Instance,
     properties: PhysicalDeviceProperties,
     features: PhysicalDeviceFeatures,
-    queue_family_properties: Vec<QueueFamilyProperties>
+    queue_family_properties: Vec<QueueFamilyProperties>,
 }
-impl PhysicalDeviceInfo{
+
+
+impl<'a> PhysicalDeviceInfo<'a> {
     pub unsafe fn create(
-        instance: &Instance,
+        instance: &'a Instance,
         device: PhysicalDevice
     ) -> Self {
         //Имя, тип, поддерживаемая версия вулкан
@@ -34,6 +38,7 @@ impl PhysicalDeviceInfo{
 
         return Self {
             device,
+            instance,
             properties: device_properties,
             features: device_features,
             queue_family_properties: queue_properties
@@ -55,14 +60,13 @@ impl PhysicalDeviceInfo{
 
     pub unsafe fn get_present_queue_index(
         &self,
-        instance: &Instance,
         surface: &SurfaceKHR
     ) -> Option<u32> {
         let properties_enum = self.queue_family_properties
             .iter()
             .enumerate();
         for (index, properties) in properties_enum {
-            let surface_support = instance.get_physical_device_surface_support_khr(
+            let surface_support = self.instance.get_physical_device_surface_support_khr(
                 self.device,
                 index as u32,
                 surface.clone()
@@ -81,7 +85,7 @@ impl PhysicalDeviceInfo{
         return None;
     }
 
-    fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{
+    unsafe fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{
         if self.properties.device_type != PhysicalDeviceType::DISCRETE_GPU {
             return Result::Err(SuitabilityError("device is not GPU."));
         }
@@ -94,7 +98,29 @@ impl PhysicalDeviceInfo{
             return Result::Err(SuitabilityError("missing graphics queue"));
         }
 
-        Result::Ok(())
+        return self.check_extensions();
+    }
+
+    unsafe fn check_extensions(
+        &self
+    ) -> Result<(), PickPhysicalDeviceError>{
+        const required_extensions: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
+
+        let extensions = self.instance
+            .enumerate_device_extension_properties(self.device.clone(), None)
+            .map_err(|error|SuitabilityError("сouldn't get extensions"))?;
+
+        let extensions = extensions
+            .iter()
+            .map(|extension| extension.extension_name)
+            .collect::<HashSet<_>>();
+
+        if required_extensions.iter().all(|name|extensions.contains(name)) {
+            Result::Ok(())
+        }
+        else {
+            Result::Err(SuitabilityError("missing required device extensions"))
+        }
     }
 }
 

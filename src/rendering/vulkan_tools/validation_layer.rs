@@ -66,14 +66,12 @@ pub fn get_debug_info() -> Option<CreateInfoEXT> {
     return Some(info);
 }
 
-pub fn create_messenger(
+pub unsafe fn create_messenger(
     instance: &Instance,
     debug_info: &Option<CreateInfoEXT>
 ) -> Option<MessengerEXT> {
     if let Some(debug_info) = debug_info{
-        unsafe {
-            instance.create_debug_utils_messenger_ext(debug_info, None).ok()
-        }
+        instance.create_debug_utils_messenger_ext(debug_info, None).ok()
     } else {
         None
     }

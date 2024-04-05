@@ -71,7 +71,7 @@ unsafe fn create_queue_infos(
         .get_queue_index(QueueFlags::GRAPHICS)
         .ok_or(CreateQueueError)?;
     let present_queue_index = device_info
-        .get_present_queue_index(instance, surface)
+        .get_present_queue_index(surface)
         .ok_or(CreateQueueError)?;
 
     let mut unique_indices = HashSet::new();
@@ -89,7 +89,5 @@ unsafe fn create_queue_infos(
         })
         .collect::<Vec<_>>();
 
-
     Result::Ok(queue_infos)
-
 }
