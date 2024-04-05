@@ -1,20 +1,21 @@
+use std::ffi::c_char;
 use vulkanalia::vk::{
     HasBuilder,
     DeviceQueueCreateInfo,
     QueueFlags,
     DeviceCreateInfo,
     PhysicalDevice,
-    PhysicalDeviceFeatures
+    PhysicalDeviceFeatures,
 };
-use vulkanalia::{
-    Entry,
-    Instance,
-    Device
+use vulkanalia::{Entry, Instance, Device, vk};
+use super::CreateLogicalDeviceError::{
+    CreateDeviceError
 };
-use super::CreateLogicalDeviceError::CreateDeviceError;
 use super::{
     CreateLogicalDeviceError,
-    PhysicalDeviceInfo
+    PhysicalDeviceInfo,
+    VALIDATION_ENABLED,
+    VALIDATION_LAYER
 };
 
 pub unsafe fn create_logical_device(
@@ -33,19 +34,28 @@ pub unsafe fn create_logical_device(
         .build();
     let queue_infos = [queue_info];
 
-    let layers = [];
-    let extensions = [];
-    let feauters = PhysicalDeviceFeatures::builder()
+    let layers = get_layers();
+    let extensions =[];
+    let features = PhysicalDeviceFeatures::builder()
         .build();
 
     let device_info = DeviceCreateInfo::builder()
         .queue_create_infos(&queue_infos)
         .enabled_layer_names(&layers)
         .enabled_extension_names(&extensions)
-        .enabled_features(&feauters);
+        .enabled_features(&features);
 
     let device = instance.create_device(physical_device, &device_info, None)
         .map_err(|err|CreateDeviceError(err))?;
 
     Result::Ok(device)
+}
+
+unsafe fn get_layers(
+) -> Vec<*const c_char>{
+    if VALIDATION_ENABLED {
+        vec![VALIDATION_LAYER.as_ptr()]
+    } else {
+        Vec::new()
+    }
 }
