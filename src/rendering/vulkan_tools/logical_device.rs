@@ -1,11 +1,12 @@
+use std::collections::HashSet;
 use std::ffi::c_char;
 use vulkanalia::vk::{
     HasBuilder,
     DeviceQueueCreateInfo,
     QueueFlags,
     DeviceCreateInfo,
-    PhysicalDevice,
     PhysicalDeviceFeatures,
+    SurfaceKHR
 };
 use vulkanalia::{
     Entry,
@@ -13,9 +14,7 @@ use vulkanalia::{
     Device,
     vk
 };
-use super::CreateLogicalDeviceError::{
-    CreateDeviceError
-};
+use super::CreateLogicalDeviceError::{CreateDeviceError, CreateQueueError};
 use super::{
     CreateLogicalDeviceError,
     PhysicalDeviceInfo,
@@ -26,17 +25,14 @@ use super::{
 pub unsafe fn create_logical_device(
     entry: &Entry,
     instance: &Instance,
+    surface: &SurfaceKHR,
     physical_device_info: &PhysicalDeviceInfo,
 ) -> Result<Device, CreateLogicalDeviceError> {
-    let queue_index = physical_device_info
-        .get_queue_index(QueueFlags::GRAPHICS).unwrap();
-
-    let queue_priorities = [1.0];
-    let queue_info = DeviceQueueCreateInfo::builder()
-        .queue_family_index(queue_index)
-        .queue_priorities(&queue_priorities)
-        .build();
-    let queue_infos = [queue_info];
+    let queue_infos = create_queue_infos(
+        instance,
+        physical_device_info,
+        surface
+    )?;
 
     let layers = get_layers();
     let extensions =[];
@@ -47,7 +43,8 @@ pub unsafe fn create_logical_device(
         .queue_create_infos(&queue_infos)
         .enabled_layer_names(&layers)
         .enabled_extension_names(&extensions)
-        .enabled_features(&features);
+        .enabled_features(&features)
+        .build();
 
     let device = instance.create_device(physical_device_info.device, &device_info, None)
         .map_err(|err|CreateDeviceError(err))?;
@@ -62,4 +59,37 @@ unsafe fn get_layers(
     } else {
         Vec::new()
     }
+}
+
+
+unsafe fn create_queue_infos(
+    instance: &Instance,
+    device_info: &PhysicalDeviceInfo,
+    surface: &SurfaceKHR
+) -> Result<Vec<DeviceQueueCreateInfo>, CreateLogicalDeviceError> {
+    let graphics_queue_index = device_info
+        .get_queue_index(QueueFlags::GRAPHICS)
+        .ok_or(CreateQueueError)?;
+    let present_queue_index = device_info
+        .get_present_queue_index(instance, surface)
+        .ok_or(CreateQueueError)?;
+
+    let mut unique_indices = HashSet::new();
+    unique_indices.insert(graphics_queue_index);
+    unique_indices.insert(present_queue_index);
+
+    let queue_priorities = [1.0];
+    let queue_infos = unique_indices
+        .iter()
+        .map(|queue_index|{
+            DeviceQueueCreateInfo::builder()
+                .queue_family_index(queue_index.clone())
+                .queue_priorities(&queue_priorities)
+                .build()
+        })
+        .collect::<Vec<_>>();
+
+
+    Result::Ok(queue_infos)
+
 }

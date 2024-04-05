@@ -61,7 +61,8 @@ impl RenderingQueue {
         let logical_device = create_logical_device(
             &entry,
             &instance,
-            &physical_device_info,
+            &window_surface,
+            &physical_device_info
         )?;
 
 

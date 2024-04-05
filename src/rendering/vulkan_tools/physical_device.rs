@@ -1,14 +1,7 @@
 use log::{debug, error, info};
 use vulkanalia::{Device, Instance, vk};
 use vulkanalia::prelude::v1_0::InstanceV1_0;
-use vulkanalia::vk::{
-    PhysicalDevice,
-    PhysicalDeviceFeatures,
-    PhysicalDeviceProperties,
-    PhysicalDeviceType,
-    QueueFamilyProperties,
-    QueueFlags
-};
+use vulkanalia::vk::{KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR};
 
 use super::PickPhysicalDeviceError;
 use super::PickPhysicalDeviceError::{
@@ -60,8 +53,32 @@ impl PhysicalDeviceInfo{
             ).map(|index| index as u32)
     }
 
-    pub fn get_present_queue(&self) {
+    pub unsafe fn get_present_queue_index(
+        &self,
+        instance: &Instance,
+        surface: &SurfaceKHR
+    ) -> Option<u32> {
+        let properties_enum = self.queue_family_properties
+            .iter()
+            .enumerate();
+        for (index, properties) in properties_enum {
+            let surface_support = instance.get_physical_device_surface_support_khr(
+                self.device,
+                index as u32,
+                surface.clone()
+            );
 
+            if surface_support.is_err(){
+                break
+            }
+
+            let surface_support = surface_support.unwrap();
+            if surface_support {
+                return Some(index as u32);
+            }
+        }
+
+        return None;
     }
 
     fn check(self: &Self) ->  Result<(), PickPhysicalDeviceError>{

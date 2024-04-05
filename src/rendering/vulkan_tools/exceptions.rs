@@ -17,4 +17,5 @@ pub enum PickPhysicalDeviceError {
 #[derive(Debug)]
 pub enum CreateLogicalDeviceError {
     CreateDeviceError(ErrorCode),
+    CreateQueueError
 }
