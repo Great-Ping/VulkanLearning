@@ -1,3 +1,4 @@
+use std::ptr::addr_eq;
 use log::debug;
 use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use vulkanalia::Entry;
@@ -11,16 +12,14 @@ use vulkanalia::{
     Device
 };
 use vulkanalia::window::create_surface;
-use vulkanalia::vk::{DebugUtilsMessengerEXT, DeviceV1_0, ExtDebugUtilsExtension, InstanceV1_0, KhrSurfaceExtension, PhysicalDevice, SurfaceKHR};
+use vulkanalia::vk::{DebugUtilsMessengerEXT, DeviceV1_0, ExtDebugUtilsExtension, Image, InstanceV1_0, KhrSurfaceExtension, KhrSwapchainExtension, PhysicalDevice, SurfaceKHR, SwapchainKHR};
+use winit::dpi::PhysicalSize;
 use super::RenderingQueueError;
 use super::RenderingQueueError::{
     EntryCreateError,
     CreateSurfaceError
 };
-use super::vulkan_tools::{
-    get_debug_info,
-    create_messenger
-};
+use super::vulkan_tools::{get_debug_info, create_messenger, pick_swap_chain};
 use super::vulkan_tools::{
     PhysicalDeviceInfo,
     create_instance,
@@ -35,12 +34,17 @@ pub struct RenderingQueue{
     messenger: Option<DebugUtilsMessengerEXT>,
     physical_device: PhysicalDevice,
     logical_device: Device,
-    surface: SurfaceKHR
+    surface: SurfaceKHR,
+    swap_chain: SwapchainKHR,
+    swapchain_images: Vec<Image>
 }
+
+//Todo RenderingQueueBuilder, RenderingQueueConfig
 
 impl RenderingQueue {
     pub unsafe fn new<TWindow>(
-        window: &TWindow
+        window: &TWindow,
+        rendering_size: PhysicalSize<u32>
     ) -> Result<RenderingQueue, RenderingQueueError>
     where TWindow: HasWindowHandle+HasDisplayHandle{
 
@@ -67,14 +71,25 @@ impl RenderingQueue {
             &physical_device_info
         )?;
 
+        let swap_chain = pick_swap_chain(
+            &instance,
+            &window_surface,
+            &physical_device_info,
+            &logical_device,
+            &rendering_size
+        )?;
 
+        //TODO
+        let swapchain_images = logical_device.get_swapchain_images_khr(swap_chain).unwrap();
         Result::Ok(RenderingQueue{
             entry,
             instance,
             messenger,
             physical_device,
             logical_device,
-            surface: window_surface
+            surface: window_surface,
+            swap_chain,
+            swapchain_images
         })
     }
 }
@@ -86,6 +101,7 @@ impl Drop for RenderingQueue{
                 self.instance.destroy_debug_utils_messenger_ext(messenger, None);
             }
             self.instance.destroy_surface_khr(self.surface, None);
+            self.logical_device.destroy_swapchain_khr(self.swap_chain, None);
             self.logical_device.destroy_device(None);
             self.instance.destroy_instance(None);
         }

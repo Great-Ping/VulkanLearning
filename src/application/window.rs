@@ -1,5 +1,5 @@
 use log::debug;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event::{
     Event,
     WindowEvent
@@ -36,6 +36,10 @@ impl ApplicationWindow {
             window,
             event_loop
         })
+    }
+
+    pub fn inner_size(&self) -> PhysicalSize<u32>{
+        return self.window.inner_size() ;
     }
 
     pub fn run(self) -> Result<(), ApplicationError>{

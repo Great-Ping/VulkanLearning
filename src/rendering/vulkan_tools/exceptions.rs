@@ -20,6 +20,20 @@ pub enum CreateLogicalDeviceError {
     CreateQueueError
 }
 
+#[derive(Debug)]
 pub enum CreateSwapchainSupportError{
     VulkanError(ErrorCode),
+}
+
+#[derive(Debug)]
+pub enum PickSwapchainError{
+    CreateSwapchainSupportError(CreateSwapchainSupportError),
+    CreateSwapchainError(ErrorCode),
+    ChooseFormatError,
+}
+
+impl From<CreateSwapchainSupportError> for PickSwapchainError{
+    fn from(error: CreateSwapchainSupportError) -> Self {
+        Self::CreateSwapchainSupportError(error)
+    }
 }

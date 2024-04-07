@@ -17,7 +17,7 @@ fn main(){
             .expect("window creation exception");
 
     let rendering_queue = unsafe {
-        RenderingQueue::new(&window)
+        RenderingQueue::new(&window, window.inner_size())
             .expect("rendering exception")
     };
 

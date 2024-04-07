@@ -6,9 +6,24 @@ use vulkanalia::{
     vk
 };
 use vulkanalia::prelude::v1_0::InstanceV1_0;
-use vulkanalia::vk::{ExtensionProperties, KhrSurfaceExtension, PhysicalDevice, PhysicalDeviceFeatures, PhysicalDeviceProperties, PhysicalDeviceType, QueueFamilyProperties, QueueFlags, SurfaceKHR, SwapchainKHR};
+use vulkanalia::vk::{
+    ExtensionProperties,
+    KhrSurfaceExtension,
+    PhysicalDevice,
+    PhysicalDeviceFeatures,
+    PhysicalDeviceProperties,
+    PhysicalDeviceType,
+    QueueFamilyProperties,
+    QueueFlags,
+    SurfaceKHR,
+    SwapchainKHR
+};
 
-use super::{PickPhysicalDeviceError, REQUIRED_EXTENSIONS, SwapchainSupport};
+use super::{
+    PickPhysicalDeviceError,
+    SwapСhainSupport,
+    REQUIRED_EXTENSIONS,
+};
 use super::PickPhysicalDeviceError::{
     SuitableDeviceNotFound,
     SuitabilityError
@@ -101,10 +116,10 @@ impl<'a> PhysicalDeviceInfo<'a> {
         &self,
         surface: &SurfaceKHR
     )->  Result<(), PickPhysicalDeviceError>{
-        let support = SwapchainSupport::create(
+        let support = SwapСhainSupport::create(
             self.instance,
             surface,
-            self.device
+            &self.device
         ).map_err(|err|SuitabilityError("swapchain is not supported"))?;
 
         if support.formats.is_empty() || support.present_modes.is_empty(){
