@@ -7,13 +7,7 @@ use vulkanalia::loader::{
     LibloadingLoader,
     LIBRARY
 };
-use vulkanalia::vk::{
-    DebugUtilsMessengerEXT,
-    Image,
-    PhysicalDevice,
-    SurfaceKHR,
-    SwapchainKHR
-};
+use vulkanalia::vk::{DebugUtilsMessengerEXT, Image, ImageView, PhysicalDevice, SurfaceKHR, SwapchainKHR};
 use winit::raw_window_handle::{
     HasDisplayHandle,
     HasWindowHandle
@@ -72,7 +66,8 @@ pub struct EndBuilder {
     pub queue_families: QueueFamilyIndices,
     pub surface: SurfaceKHR,
     pub swap_chain: SwapchainKHR,
-    pub swap_chain_images: Vec<Image>
+    pub swap_chain_images: Vec<Image>,
+    pub swap_chain_image_views: Vec<ImageView>
 }
 
 impl EndBuilder{
@@ -86,7 +81,8 @@ impl EndBuilder{
             self.queue_families,
             self.surface,
             self.swap_chain,
-            self.swap_chain_images
+            self.swap_chain_images,
+            self.swap_chain_image_views
         )
     }
 }

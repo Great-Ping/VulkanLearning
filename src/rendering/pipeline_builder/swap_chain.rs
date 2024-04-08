@@ -1,6 +1,10 @@
 use std::collections::HashSet;
-use vulkanalia::{Device, Entry, Instance};
-use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentModeKHR, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR, SwapchainCreateInfoKHR, SwapchainKHR, Format, Extent2D, Extent3D, SharingMode, ImageUsageFlags, QueueFlags, CompositeAlphaFlagsKHR, Handle, KhrSwapchainExtension, DebugUtilsMessengerEXT, Image, ImageSubresourceRange, ComponentSwizzle, ImageViewCreateInfo, ImageAspectFlags, ImageViewType};
+use vulkanalia::{
+    Device,
+    Entry,
+    Instance
+};
+use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentModeKHR, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR, SwapchainCreateInfoKHR, SwapchainKHR, Format, Extent2D, SharingMode, ImageUsageFlags, CompositeAlphaFlagsKHR, KhrSwapchainExtension, DebugUtilsMessengerEXT, Image, ComponentSwizzle, ComponentMapping, ImageSubresourceRange, ImageViewCreateInfo, ImageViewType, ImageAspectFlags, DeviceV1_0, ImageView};
 use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 
@@ -72,6 +76,12 @@ impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
                 .map_err(|err| ErrorCode(err))?
         };
 
+        let swap_chain_image_views = create_swap_chain_image_views(
+            &self.logical_device,
+            &swap_chain_images,
+            &format.format
+        )?;
+
         return Result::Ok(EndBuilder {
             entry: self.entry,
             instance: self.instance,
@@ -81,10 +91,12 @@ impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
             queue_families: self.queue_families,
             surface: self.surface,
             swap_chain,
-            swap_chain_images
+            swap_chain_images,
+            swap_chain_image_views
         });
     }
 }
+
 
 #[derive(Clone)]
 pub struct SwapСhainSupport {
@@ -168,4 +180,45 @@ fn choose_swap_chain_surface_format(
         }
     }
     return None;
+}
+
+fn create_swap_chain_image_views(
+    device: &Device,
+    images: &Vec<Image>,
+    format: &Format,
+) -> Result<Vec<ImageView>, PipelineBuildError> {
+    let mut image_views = Vec::with_capacity(images.len());
+
+    for image in images {
+        let components = ComponentMapping::builder()
+            .r(ComponentSwizzle::IDENTITY)
+            .g(ComponentSwizzle::IDENTITY)
+            .b(ComponentSwizzle::IDENTITY)
+            .a(ComponentSwizzle::IDENTITY);
+
+        let subresource_range = ImageSubresourceRange::builder()
+            .aspect_mask(ImageAspectFlags::COLOR)
+            .base_mip_level(0)
+            .level_count(1)
+            .base_array_layer(0)
+            .layer_count(1)
+            .build();
+
+        let view_info = ImageViewCreateInfo::builder()
+            .image(image.clone())
+            .view_type(ImageViewType::_2D)
+            .format(format.clone())
+            .components(components)
+            .subresource_range(subresource_range)
+            .build();
+
+        unsafe {
+            let image_view = device.create_image_view(&view_info, None)
+                .map_err(|err| ErrorCode(err))?;
+
+            image_views.push(image_view);
+        }
+    }
+
+    Result::Ok(image_views)
 }

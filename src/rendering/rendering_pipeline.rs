@@ -14,19 +14,7 @@ use vulkanalia::{
     Device
 };
 use vulkanalia::window::create_surface;
-use vulkanalia::vk::{
-    DebugUtilsMessengerEXT,
-    InstanceV1_0,
-    DeviceV1_0,
-    ExtDebugUtilsExtension,
-    Handle,
-    KhrSurfaceExtension,
-    KhrSwapchainExtension,
-    PhysicalDevice,
-    SurfaceKHR,
-    SwapchainKHR,
-    Image,
-};
+use vulkanalia::vk::{DebugUtilsMessengerEXT, InstanceV1_0, DeviceV1_0, ExtDebugUtilsExtension, Handle, KhrSurfaceExtension, KhrSwapchainExtension, PhysicalDevice, SurfaceKHR, SwapchainKHR, Image, ImageView};
 use winit::dpi::PhysicalSize;
 
 use super::{
@@ -46,7 +34,8 @@ pub struct RenderingPipeline {
     queue_families: QueueFamilyIndices,
     surface: SurfaceKHR,
     swap_chain: SwapchainKHR,
-    swap_chain_images: Vec<Image>
+    swap_chain_images: Vec<Image>,
+    swap_chain_image_views: Vec<ImageView>
 }
 
 //Todo RenderingQueueBuilder, RenderingQueueConfig
@@ -62,7 +51,8 @@ impl RenderingPipeline {
         queue_families: QueueFamilyIndices,
         surface: SurfaceKHR,
         swap_chain: SwapchainKHR,
-        swap_chain_images: Vec<Image>
+        swap_chain_images: Vec<Image>,
+        swap_chain_image_views: Vec<ImageView>
     ) -> RenderingPipeline {
         return RenderingPipeline {
             entry,
@@ -74,6 +64,7 @@ impl RenderingPipeline {
             surface,
             swap_chain,
             swap_chain_images,
+            swap_chain_image_views
         }
     }
 
@@ -99,7 +90,14 @@ impl Drop for RenderingPipeline {
             if let Some(messenger) = self.messenger {
                 self.instance.destroy_debug_utils_messenger_ext(messenger, None);
             }
+
+            for image_view in &self.swap_chain_image_views{
+                self.logical_device.destroy_image_view(image_view.clone(), None);
+            }
+
+
             self.logical_device.destroy_swapchain_khr(self.swap_chain, None);
+
             self.instance.destroy_surface_khr(self.surface, None);
             self.logical_device.destroy_device(None);
             self.instance.destroy_instance(None);
