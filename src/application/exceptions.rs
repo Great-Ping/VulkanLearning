@@ -1,5 +1,4 @@
 use winit::error::{EventLoopError, OsError};
-
 use crate::rendering::RenderingQueueError;
 
 #[derive(Debug)]

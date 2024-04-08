@@ -1,5 +1,5 @@
 use application::ApplicationWindow;
-use crate::rendering::RenderingQueue;
+use crate::rendering::{RenderingPipeline, RenderingPipelineConfig, RenderingResolution};
 use simple_logger::SimpleLogger;
 
 mod application;
@@ -16,10 +16,14 @@ fn main(){
         ApplicationWindow::new()
             .expect("window creation exception");
 
-    let rendering_queue = unsafe {
-        RenderingQueue::new(&window, window.inner_size())
-            .expect("rendering exception")
+    let config = RenderingPipelineConfig{
+        window: &window,
+        use_validation_layer: cfg!(debug_assertions),
+        rendering_resolution: RenderingResolution::from(window.inner_size())
     };
+
+    let rendering_queue = RenderingPipeline::create(&config)
+        .expect("rendering exception");
 
     window.run()
         .expect("main loop exception");

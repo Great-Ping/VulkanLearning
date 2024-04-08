@@ -1,0 +1,171 @@
+use std::collections::HashSet;
+use vulkanalia::{Device, Entry, Instance};
+use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentModeKHR, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR, SwapchainCreateInfoKHR, SwapchainKHR, Format, Extent2D, Extent3D, SharingMode, ImageUsageFlags, QueueFlags, CompositeAlphaFlagsKHR, Handle, KhrSwapchainExtension, DebugUtilsMessengerEXT, Image, ImageSubresourceRange, ComponentSwizzle, ImageViewCreateInfo, ImageAspectFlags, ImageViewType};
+use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+
+
+use crate::rendering::pipeline_builder::{ PipelineBuildError, QueueFamilyIndices};
+use crate::rendering::pipeline_builder::initial_builder::EndBuilder;
+use crate::rendering::pipeline_builder::PipelineBuildError::{ErrorCode, ErrorMessage};
+use crate::rendering::rendering_pipeline_config::RenderingResolution;
+use crate::rendering::RenderingPipelineConfig;
+
+pub struct SwapChainBuilder<'config, TWindow>
+    where TWindow: HasDisplayHandle + HasWindowHandle {
+    pub config: &'config RenderingPipelineConfig<TWindow>,
+    pub entry: Entry,
+    pub instance: Instance,
+    pub messenger: Option<DebugUtilsMessengerEXT>,
+    pub surface: SurfaceKHR,
+    pub physical_device: PhysicalDevice,
+    pub logical_device: Device,
+    pub queue_families: QueueFamilyIndices,
+    pub swap_chain_support: SwapСhainSupport,
+}
+
+impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
+    where TWindow: HasDisplayHandle + HasWindowHandle {
+    pub fn create_swap_chain(self, old_swapchain: SwapchainKHR) -> Result<EndBuilder, PipelineBuildError> {
+
+        let support = &self.swap_chain_support;
+        let format = choose_swap_chain_surface_format(&support.formats)
+            .ok_or(ErrorMessage("Choose format error"))?;
+        let present_mode = choose_present_mode(&support.present_modes);
+        let extent = choose_swap_chain_extent(&self.config.rendering_resolution, &support.capabilities);
+
+        let image_count = (support.capabilities.min_image_count + 1).clamp(
+            support.capabilities.min_image_count,
+            support.capabilities.max_image_count
+        );
+
+        let queue_family_indices = self.queue_families.get_unique_indices();
+        let sharing_mode = if queue_family_indices.iter().count() > 1 {
+            SharingMode::CONCURRENT
+        } else {
+            SharingMode::EXCLUSIVE
+        };
+
+        let swap_chain_info = SwapchainCreateInfoKHR::builder()
+            .surface(self.surface.clone())
+            .min_image_count(image_count)
+            .image_format(format.format)
+            .image_color_space(format.color_space)
+            .image_extent(extent)
+            .image_array_layers(1)
+            .image_usage(ImageUsageFlags::COLOR_ATTACHMENT)
+            .image_sharing_mode(sharing_mode)
+            .queue_family_indices(&queue_family_indices)
+            .pre_transform(support.capabilities.current_transform)
+            .composite_alpha(CompositeAlphaFlagsKHR::OPAQUE)
+            .present_mode(present_mode)
+            .clipped(true)
+            .old_swapchain(old_swapchain)
+            .build();
+
+        let swap_chain = unsafe{
+            self.logical_device.create_swapchain_khr(&swap_chain_info, None)
+                .map_err(|err| ErrorCode(err))?
+        };
+
+        let swap_chain_images = unsafe {
+            self.logical_device.get_swapchain_images_khr(swap_chain)
+                .map_err(|err| ErrorCode(err))?
+        };
+
+        return Result::Ok(EndBuilder {
+            entry: self.entry,
+            instance: self.instance,
+            messenger: self.messenger,
+            physical_device: self.physical_device,
+            logical_device: self.logical_device,
+            queue_families: self.queue_families,
+            surface: self.surface,
+            swap_chain,
+            swap_chain_images
+        });
+    }
+}
+
+#[derive(Clone)]
+pub struct SwapСhainSupport {
+    pub capabilities: SurfaceCapabilitiesKHR,
+    pub formats: Vec<SurfaceFormatKHR>,
+    pub present_modes: Vec<PresentModeKHR>
+}
+
+impl SwapСhainSupport {
+    pub fn create(
+        instance: &Instance,
+        surface: &SurfaceKHR,
+        physical_device: &PhysicalDevice
+    ) -> Result<Self, PipelineBuildError> {
+        let capabilities = unsafe {
+            instance
+                .get_physical_device_surface_capabilities_khr(physical_device.clone(), surface.clone())
+                .map_err(|err|ErrorCode(err))?
+        };
+
+        let formats = unsafe {
+            instance
+                .get_physical_device_surface_formats_khr(physical_device.clone(), surface.clone())
+                .map_err(|err|ErrorCode(err))?
+        };
+
+        let present_modes = unsafe {
+            instance
+                .get_physical_device_surface_present_modes_khr(physical_device.clone(), surface.clone())
+                .map_err(|err|ErrorCode(err))?
+        };
+
+        Result::Ok(Self{
+            capabilities,
+            formats,
+            present_modes
+        })
+    }
+}
+
+fn choose_swap_chain_extent(
+    rendering_resolution: &RenderingResolution,
+    capabilities: &SurfaceCapabilitiesKHR
+) -> Extent2D {
+    if capabilities.current_extent.width != u32::MAX{
+        return  capabilities.current_extent
+    }
+
+   let extent = Extent2D::builder()
+        .width(rendering_resolution.width.clamp(
+            capabilities.min_image_count,
+            capabilities.max_image_count
+        ))
+        .height(rendering_resolution.height.clamp(
+            capabilities.min_image_count,
+            capabilities.max_image_count
+        ))
+       .build();
+
+    return extent;
+}
+
+fn choose_present_mode(supported_present_modes: &Vec<PresentModeKHR>) -> PresentModeKHR {
+    let supported_present_modes = supported_present_modes
+        .iter()
+        .collect::<HashSet<_>>();
+
+    if supported_present_modes.contains(&PresentModeKHR::MAILBOX) {
+        return PresentModeKHR::MAILBOX;
+    }
+
+    return PresentModeKHR::FIFO;
+}
+
+fn choose_swap_chain_surface_format(
+    formats: &Vec<SurfaceFormatKHR>
+) -> Option<SurfaceFormatKHR> {
+    for availableFormat in formats {
+        if availableFormat.format == Format::B8G8R8A8_SRGB{
+            return Some(availableFormat.clone());
+        }
+    }
+    return None;
+}

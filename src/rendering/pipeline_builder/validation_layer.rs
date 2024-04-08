@@ -1,10 +1,21 @@
-use std::ffi::{c_void, CStr};
-use log::{debug, error, trace, warn};
-use vulkanalia::{Instance, vk};
+use std::ffi::{
+    c_void,
+    CStr
+};
+
+use log::{
+    debug,
+    error,
+    trace,
+    warn
+};
+
+use vulkanalia::Instance;
 use vulkanalia::vk::{
     Bool32,
     ExtensionName,
     ExtDebugUtilsExtension,
+    FALSE
 };
 use vulkanalia::vk::{
     DebugUtilsMessageSeverityFlagsEXT as SeverityFlagsEXT,
@@ -15,8 +26,6 @@ use vulkanalia::vk::{
     HasBuilder
 };
 
-pub const VALIDATION_ENABLED:bool =
-    cfg!(debug_assertions);
 pub const VALIDATION_LAYER: ExtensionName =
     ExtensionName::from_bytes(
         b"VK_LAYER_KHRONOS_validation"
@@ -52,31 +61,14 @@ pub extern "system" fn debug_callback(
         trace!("({:?}) {}", type_flags, message)
     }
 
-    return vk::FALSE;
+    return FALSE;
 }
 
 
-pub fn get_debug_info() -> Option<CreateInfoEXT> {
-    if !VALIDATION_ENABLED{
-        return None
-    }
-
-    let info = CreateInfoEXT::builder()
+pub fn get_debug_info() -> CreateInfoEXT {
+    CreateInfoEXT::builder()
         .message_severity(SeverityFlagsEXT::all())
         .message_type(TypeFlagsEXT::all())
         .user_callback(Some(debug_callback))
-        .build();
-
-    return Some(info);
-}
-
-pub unsafe fn create_messenger(
-    instance: &Instance,
-    debug_info: &Option<CreateInfoEXT>
-) -> Option<MessengerEXT> {
-    if let Some(debug_info) = debug_info{
-        instance.create_debug_utils_messenger_ext(debug_info, None).ok()
-    } else {
-        None
-    }
+        .build()
 }
