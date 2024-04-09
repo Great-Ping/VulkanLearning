@@ -1,9 +1,9 @@
-pub use rendering_pipeline::RenderingPipeline;
-pub use rendering_pipeline_config::*;
+pub use rendering_queue::RenderingQueue;
+pub use rendering_queue_config::*;
 pub use exceptions::*;
-pub use pipeline_builder::*;
+pub use queue_builder::*;
 
 mod exceptions;
-mod pipeline_builder;
-mod rendering_pipeline;
-mod rendering_pipeline_config;
+mod queue_builder;
+mod rendering_queue;
+mod rendering_queue_config;

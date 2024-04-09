@@ -8,10 +8,10 @@ use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentMod
 use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 
-use crate::rendering::pipeline_builder::{ PipelineBuildError, QueueFamilyIndices};
-use crate::rendering::pipeline_builder::initial_builder::EndBuilder;
-use crate::rendering::pipeline_builder::PipelineBuildError::{ErrorCode, ErrorMessage};
-use crate::rendering::rendering_pipeline_config::RenderingResolution;
+use crate::rendering::queue_builder::{PipelineBuildError, QueueFamilyIndices};
+use crate::rendering::queue_builder::initial_builder::EndBuilder;
+use crate::rendering::queue_builder::PipelineBuildError::{ErrorCode, ErrorMessage};
+use crate::rendering::rendering_queue_config::RenderingResolution;
 use crate::rendering::RenderingPipelineConfig;
 
 pub struct SwapChainBuilder<'config, TWindow>

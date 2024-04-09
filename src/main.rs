@@ -1,5 +1,7 @@
+use std::env;
+use std::fs::File;
 use application::ApplicationWindow;
-use crate::rendering::{RenderingPipeline, RenderingPipelineConfig, RenderingResolution};
+use crate::rendering::{RenderingQueue, RenderingPipelineConfig, RenderingResolution};
 use simple_logger::SimpleLogger;
 
 mod application;
@@ -22,7 +24,7 @@ fn main(){
         rendering_resolution: RenderingResolution::from(window.inner_size())
     };
 
-    let rendering_queue = RenderingPipeline::create(&config)
+    let rendering_queue = RenderingQueue::create(&config)
         .expect("rendering exception");
 
     window.run()

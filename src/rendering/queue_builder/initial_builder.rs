@@ -15,7 +15,7 @@ use winit::raw_window_handle::{
 
 
 use crate::rendering::{
-    RenderingPipeline,
+    RenderingQueue,
     RenderingPipelineConfig,
     PipelineBuildError::ErrorMessage
 };
@@ -71,8 +71,8 @@ pub struct EndBuilder {
 }
 
 impl EndBuilder{
-    pub fn build(self) -> RenderingPipeline {
-        return RenderingPipeline::new (
+    pub fn build(self) -> RenderingQueue {
+        return RenderingQueue::new (
             self.entry,
             self.instance,
             self.messenger,
@@ -87,7 +87,7 @@ impl EndBuilder{
     }
 }
 
-impl RenderingPipeline {
+impl RenderingQueue {
 
     pub fn builder<TWindow>(
         config: &RenderingPipelineConfig<TWindow>

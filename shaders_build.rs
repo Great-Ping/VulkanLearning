@@ -30,7 +30,7 @@ impl ShadersCompiler {
 
         let output_file = concat_paths(
             &output_directory,
-            file_name
+            &format!("{}.spv", file_name)
         );
 
         let output = Command::new(&self.compiler_path)
@@ -102,7 +102,10 @@ fn create_output_directory_if_not_exists(directory_path: String) {
 fn main(){
 
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let out_dir= env::var("OUT_DIR").unwrap();
+    let profile_dir = env::var("PROFILE").unwrap();
+    let out_dir = concat_paths(&manifest_dir, "target");
+    let out_dir = concat_paths(&out_dir, &profile_dir);
+
 
     let vulkan_sdk_path = env::var("VK_SDK_PATH").unwrap();
     let compiler_path = vulkan_sdk_path + "\\Bin\\glslc.exe";
@@ -112,7 +115,7 @@ fn main(){
 
     println!("cargo::rerun-if-changed={}", shaders_directory);
 
-    fs::remove_dir_all(&shaders_out_dir).unwrap();
+    fs::remove_dir_all(&shaders_out_dir);
 
     let compiler = ShadersCompiler {
         compiler_path,

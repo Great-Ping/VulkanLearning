@@ -25,7 +25,7 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct RenderingPipeline {
+pub struct RenderingQueue {
     entry: Entry,
     instance: Instance,
     messenger: Option<DebugUtilsMessengerEXT>,
@@ -40,7 +40,7 @@ pub struct RenderingPipeline {
 
 //Todo RenderingQueueBuilder, RenderingQueueConfig
 
-impl RenderingPipeline {
+impl RenderingQueue {
 
     pub fn new (
         entry: Entry,
@@ -53,8 +53,8 @@ impl RenderingPipeline {
         swap_chain: SwapchainKHR,
         swap_chain_images: Vec<Image>,
         swap_chain_image_views: Vec<ImageView>
-    ) -> RenderingPipeline {
-        return RenderingPipeline {
+    ) -> RenderingQueue {
+        return RenderingQueue {
             entry,
             instance,
             messenger,
@@ -70,7 +70,7 @@ impl RenderingPipeline {
 
     pub fn create<TWindow>(
         config: &RenderingPipelineConfig<&TWindow>
-    ) -> Result<RenderingPipeline, PipelineBuildError>
+    ) -> Result<RenderingQueue, PipelineBuildError>
     where TWindow: HasWindowHandle+HasDisplayHandle {
         let pipeline = Self::builder(config)
             .create_entry()?
@@ -84,7 +84,7 @@ impl RenderingPipeline {
     }
 }
 
-impl Drop for RenderingPipeline {
+impl Drop for RenderingQueue {
     fn drop(&mut self){
         unsafe {
             if let Some(messenger) = self.messenger {
@@ -94,7 +94,6 @@ impl Drop for RenderingPipeline {
             for image_view in &self.swap_chain_image_views{
                 self.logical_device.destroy_image_view(image_view.clone(), None);
             }
-
 
             self.logical_device.destroy_swapchain_khr(self.swap_chain, None);
 
