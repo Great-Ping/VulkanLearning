@@ -8,9 +8,9 @@ use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentMod
 use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 
-use crate::rendering::queue_builder::{PipelineBuildError, QueueFamilyIndices};
+use crate::rendering::queue_builder::{RenderingQueueBuildError, QueueFamilyIndices};
 use crate::rendering::queue_builder::initial_builder::EndBuilder;
-use crate::rendering::queue_builder::PipelineBuildError::{ErrorCode, ErrorMessage};
+use crate::rendering::queue_builder::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
 use crate::rendering::rendering_queue_config::RenderingResolution;
 use crate::rendering::RenderingPipelineConfig;
 
@@ -29,7 +29,7 @@ pub struct SwapChainBuilder<'config, TWindow>
 
 impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
     where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_swap_chain(self, old_swapchain: SwapchainKHR) -> Result<EndBuilder, PipelineBuildError> {
+    pub fn create_swap_chain(self, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
 
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
@@ -110,7 +110,7 @@ impl SwapСhainSupport {
         instance: &Instance,
         surface: &SurfaceKHR,
         physical_device: &PhysicalDevice
-    ) -> Result<Self, PipelineBuildError> {
+    ) -> Result<Self, RenderingQueueBuildError> {
         let capabilities = unsafe {
             instance
                 .get_physical_device_surface_capabilities_khr(physical_device.clone(), surface.clone())
@@ -186,7 +186,7 @@ fn create_swap_chain_image_views(
     device: &Device,
     images: &Vec<Image>,
     format: &Format,
-) -> Result<Vec<ImageView>, PipelineBuildError> {
+) -> Result<Vec<ImageView>, RenderingQueueBuildError> {
     let mut image_views = Vec::with_capacity(images.len());
 
     for image in images {

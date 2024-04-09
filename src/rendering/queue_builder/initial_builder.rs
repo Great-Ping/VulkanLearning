@@ -17,12 +17,12 @@ use winit::raw_window_handle::{
 use crate::rendering::{
     RenderingQueue,
     RenderingPipelineConfig,
-    PipelineBuildError::ErrorMessage
+    RenderingQueueBuildError::ErrorMessage
 };
 
 use super::{
     InstanceBuilder,
-    PipelineBuildError,
+    RenderingQueueBuildError,
     QueueFamilyIndices
 };
 
@@ -42,7 +42,7 @@ impl<'config, TWindow> InitialBuilder<'config, TWindow>
         }
     }
 
-    pub fn create_entry(self) -> Result<InstanceBuilder<'config, TWindow>, PipelineBuildError>{
+    pub fn create_entry(self) -> Result<InstanceBuilder<'config, TWindow>, RenderingQueueBuildError>{
         let entry = unsafe {
             let loader = LibloadingLoader::new(LIBRARY)
                 .map_err(|err| ErrorMessage("Load library error"))?;

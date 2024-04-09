@@ -24,7 +24,7 @@ use vulkanalia::vk::{
 };
 
 use crate::rendering::RenderingPipelineConfig;
-use crate::rendering::PipelineBuildError::{
+use crate::rendering::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
 };
@@ -32,7 +32,7 @@ use crate::rendering::PipelineBuildError::{
 use super::{
     get_debug_info,
     PhysicalDeviceBuilder,
-    PipelineBuildError,
+    RenderingQueueBuildError,
     VALIDATION_LAYER};
 
 
@@ -44,7 +44,7 @@ pub struct InstanceBuilder<'config, TWindow>
 
 impl<'config, TWindow> InstanceBuilder<'config, TWindow>
     where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_instance(self) -> Result<PhysicalDeviceBuilder<'config, TWindow>, PipelineBuildError>{
+    pub fn create_instance(self) -> Result<PhysicalDeviceBuilder<'config, TWindow>, RenderingQueueBuildError>{
         let application_info = ApplicationInfo::builder()
             .application_name(b"Vulkan Learning\0")
             .application_version(make_version(1, 0, 0))
@@ -119,7 +119,7 @@ fn get_extensions<TWindow>(
 unsafe fn get_layers<TWindow>(
     entry: &Entry,
     config: &RenderingPipelineConfig<TWindow>
-) -> Result<Vec<*const c_char>, PipelineBuildError>
+) -> Result<Vec<*const c_char>, RenderingQueueBuildError>
     where TWindow: HasDisplayHandle + HasWindowHandle{
     let layers = entry
         .enumerate_instance_layer_properties()

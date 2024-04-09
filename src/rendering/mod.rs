@@ -7,3 +7,4 @@ mod exceptions;
 mod queue_builder;
 mod rendering_queue;
 mod rendering_queue_config;
+mod shaders;

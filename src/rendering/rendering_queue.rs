@@ -19,7 +19,7 @@ use winit::dpi::PhysicalSize;
 
 use super::{
     RenderingPipelineConfig,
-    PipelineBuildError,
+    RenderingQueueBuildError,
     QueueFamilyIndices,
     get_debug_info,
 };
@@ -70,7 +70,7 @@ impl RenderingQueue {
 
     pub fn create<TWindow>(
         config: &RenderingPipelineConfig<&TWindow>
-    ) -> Result<RenderingQueue, PipelineBuildError>
+    ) -> Result<RenderingQueue, RenderingQueueBuildError>
     where TWindow: HasWindowHandle+HasDisplayHandle {
         let pipeline = Self::builder(config)
             .create_entry()?
@@ -82,6 +82,8 @@ impl RenderingQueue {
         
         Result::Ok(pipeline)
     }
+
+
 }
 
 impl Drop for RenderingQueue {

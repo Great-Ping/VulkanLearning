@@ -20,11 +20,11 @@ use vulkanalia::vk::{
     DebugUtilsMessengerEXT
 };
 
-use crate::rendering::PipelineBuildError::ErrorCode;
+use crate::rendering::RenderingQueueBuildError::ErrorCode;
 use crate::rendering::RenderingPipelineConfig;
 
 use super::{
-    PipelineBuildError,
+    RenderingQueueBuildError,
     QueueFamilyIndices,
     SwapChainBuilder,
     SwapСhainSupport,
@@ -47,7 +47,7 @@ pub struct LogicalDeviceBuilder<'config, TWindow>
 
 impl<'config, TWindow>  LogicalDeviceBuilder<'config, TWindow>
     where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_logical_device(self) -> Result<SwapChainBuilder<'config, TWindow>, PipelineBuildError>{
+    pub fn create_logical_device(self) -> Result<SwapChainBuilder<'config, TWindow>, RenderingQueueBuildError>{
         let queue_infos = unsafe {
             create_queue_infos(
                 &self.queue_families

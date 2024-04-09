@@ -20,7 +20,7 @@ use vulkanalia::vk::{
 };
 
 use crate::rendering::RenderingPipelineConfig;
-use crate::rendering::PipelineBuildError::{
+use crate::rendering::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
 };
@@ -28,7 +28,7 @@ use crate::rendering::PipelineBuildError::{
 use super::{
     SwapСhainSupport,
     REQUIRED_EXTENSIONS,
-    PipelineBuildError,
+    RenderingQueueBuildError,
     LogicalDeviceBuilder
 };
 
@@ -38,7 +38,7 @@ pub struct QueueFamilyIndices{
     pub present: u32
 }
 impl QueueFamilyIndices{
-    pub fn create(instance: &Instance, device: &PhysicalDevice, surface: &SurfaceKHR) -> Result<QueueFamilyIndices, PipelineBuildError>{
+    pub fn create(instance: &Instance, device: &PhysicalDevice, surface: &SurfaceKHR) -> Result<QueueFamilyIndices, RenderingQueueBuildError>{
         let queue_properties = unsafe {
             instance
                 .get_physical_device_queue_family_properties(device.clone())
@@ -76,7 +76,7 @@ pub struct PhysicalDeviceBuilder<'config, TWindow>
 
 impl <'config, TWindow> PhysicalDeviceBuilder<'config, TWindow>
     where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuilder<'config, TWindow>, PipelineBuildError>{
+    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuilder<'config, TWindow>, RenderingQueueBuildError>{
         let devices =  unsafe {
             self.instance
                 .enumerate_physical_devices()
@@ -108,7 +108,7 @@ impl <'config, TWindow> PhysicalDeviceBuilder<'config, TWindow>
     }
 }
 
-fn check_device_suitable(instance: &Instance, device: &PhysicalDevice, swap_chain_support: &SwapСhainSupport ) ->  Result<(), PipelineBuildError>{
+fn check_device_suitable(instance: &Instance, device: &PhysicalDevice, swap_chain_support: &SwapСhainSupport ) ->  Result<(), RenderingQueueBuildError>{
     unsafe {
         check_physical_device(instance, device)?;
         check_extensions_support(instance, device)?;
@@ -120,7 +120,7 @@ fn check_device_suitable(instance: &Instance, device: &PhysicalDevice, swap_chai
 
 unsafe fn check_swap_chain_support(
     swap_chain_support: &SwapСhainSupport
-) ->  Result<(), PipelineBuildError>{
+) ->  Result<(), RenderingQueueBuildError>{
 
     if swap_chain_support.formats.is_empty() || swap_chain_support.present_modes.is_empty(){
         return Result::Err(ErrorMessage("swap chain is not supported"))
@@ -129,7 +129,7 @@ unsafe fn check_swap_chain_support(
     Result::Ok(())
 }
 
-unsafe fn check_physical_device(instance: &Instance, device: &PhysicalDevice)->  Result<(), PipelineBuildError>{
+unsafe fn check_physical_device(instance: &Instance, device: &PhysicalDevice)->  Result<(), RenderingQueueBuildError>{
     //Имя, тип, поддерживаемая версия вулкан
     let device_properties = instance
         .get_physical_device_properties(device.clone());
@@ -148,7 +148,7 @@ unsafe fn check_physical_device(instance: &Instance, device: &PhysicalDevice)-> 
     Result::Ok(())
 }
 
-unsafe fn check_extensions_support(instance: &Instance, device: &PhysicalDevice) -> Result<(), PipelineBuildError>{
+unsafe fn check_extensions_support(instance: &Instance, device: &PhysicalDevice) -> Result<(), RenderingQueueBuildError>{
 
     let extensions = instance
         .enumerate_device_extension_properties(device.clone(), None)

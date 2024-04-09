@@ -1,7 +1,7 @@
 use vulkanalia::vk::ErrorCode;
 
 #[derive(Debug)]
-pub enum PipelineBuildError {
+pub enum RenderingQueueBuildError {
     ErrorMessage(&'static str),
     ErrorCode(ErrorCode)
 }
