@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use std::env;
 use std::ops::Range;
-use log::debug;
+use log::{debug, info};
 use winit::raw_window_handle::{
     HasDisplayHandle,
     HasWindowHandle
@@ -37,39 +37,35 @@ use super::{
     RenderingQueueBuildError,
     QueueFamilyIndices,
     RenderingError,
+    SwapChainData,
     get_debug_info
 };
 
 #[derive(Debug)]
 pub struct RenderingQueue {
-    entry: Entry,
-    instance: Instance,
-    messenger: Option<vk::DebugUtilsMessengerEXT>,
-    physical_device: vk::PhysicalDevice,
-    logical_device: Device,
+    entry: Box<Entry>,
+    instance: Box<Instance>,
+    messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
+    physical_device: Box<vk::PhysicalDevice>,
+    logical_device: Box<Device>,
     queue_families: QueueFamilyIndices,
-    surface: vk::SurfaceKHR,
-    swap_chain: vk::SwapchainKHR,
-    swap_chain_extent: vk::Extent2D,
-    swap_chain_images: Vec<vk::Image>,
-    swap_chain_image_views: Vec<vk::ImageView>
+    surface: Box<vk::SurfaceKHR>,
+    swap_chain: Box<SwapChainData>
 }
 
 impl RenderingQueue {
 
     pub fn new (
-        entry: Entry,
-        instance: Instance,
-        messenger: Option<vk::DebugUtilsMessengerEXT>,
-        physical_device: vk::PhysicalDevice,
-        logical_device: Device,
-        queue_families: QueueFamilyIndices,
-        surface: vk::SurfaceKHR,
-        swap_chain: vk::SwapchainKHR,
-        swap_chain_extent: vk::Extent2D,
-        swap_chain_images: Vec<vk::Image>,
-        swap_chain_image_views: Vec<vk::ImageView>
-    ) -> RenderingQueue {
+        entry: Box<Entry>,
+        instance: Box<Instance>,
+        messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
+        physical_device: Box<vk::PhysicalDevice>,
+        logical_device: Box<Device>,
+        queue_families:QueueFamilyIndices,
+        surface: Box<vk::SurfaceKHR>,
+        swap_chain: Box<SwapChainData>
+    ) -> RenderingQueue
+    {
         return RenderingQueue {
             entry,
             instance,
@@ -78,24 +74,51 @@ impl RenderingQueue {
             logical_device,
             queue_families,
             surface,
-            swap_chain,
-            swap_chain_images,
-            swap_chain_extent,
-            swap_chain_image_views
+            swap_chain
         }
     }
 
     pub fn create<TWindow>(
         config: &RenderingPipelineConfig<&TWindow>
     ) -> Result<RenderingQueue, RenderingQueueBuildError>
-    where TWindow: HasWindowHandle+HasDisplayHandle {
+    where TWindow: HasWindowHandle+HasDisplayHandle
+    {
+        let now = std::time::Instant::now();
+
         let pipeline = Self::builder()
-            .create_entry()?
-            .create_instance(&config.window, config.use_validation_layer)?
-            .choose_physical_device()?
-            .create_logical_device(config.use_validation_layer)?
-            .create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?
-            .build();
+            .create_entry()?;
+
+        let elapsed = now.elapsed();
+        info!("Entry creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+
+        let pipeline= pipeline.create_instance(&config.window, config.use_validation_layer)?;
+
+        let elapsed = now.elapsed();
+        info!("Instance creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.choose_physical_device()?;
+
+        let elapsed = now.elapsed();
+        info!("Physical device creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.create_logical_device(config.use_validation_layer)?;
+
+        let elapsed = now.elapsed();
+        info!("Logical device creation duration: {:?}", elapsed);
+
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?;
+
+        let elapsed = now.elapsed();
+        info!("Swap chain creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.build();
 
         Result::Ok(pipeline)
     }
@@ -165,8 +188,8 @@ impl RenderingQueue {
         let viewport = vk::Viewport::builder()
             .x(0.0)
             .y(0.0)
-            .width(self.swap_chain_extent.width as f32)
-            .height(self.swap_chain_extent.height as f32)
+            .width(self.swap_chain.extent.width as f32)
+            .height(self.swap_chain.extent.height as f32)
             .min_depth(0.0)
             .max_depth(1.0)
             .build();
@@ -241,19 +264,19 @@ impl RenderingQueue {
 impl Drop for RenderingQueue {
     fn drop(&mut self){
         unsafe {
-            if let Some(messenger) = self.messenger {
-                self.instance.destroy_debug_utils_messenger_ext(messenger, None);
+            if let Some(messenger) = &self.messenger {
+                self.instance.destroy_debug_utils_messenger_ext(**messenger, None);
             }
 
             // self.logical_device.destroy_pipeline();
 
-            for image_view in &self.swap_chain_image_views{
-                self.logical_device.destroy_image_view(image_view.clone(), None);
+            for image_view in &self.swap_chain.image_views{
+                self.logical_device.destroy_image_view(*image_view, None);
             }
 
-            self.logical_device.destroy_swapchain_khr(self.swap_chain, None);
+            self.logical_device.destroy_swapchain_khr(self.swap_chain.swap_chain, None);
 
-            self.instance.destroy_surface_khr(self.surface, None);
+            self.instance.destroy_surface_khr(*self.surface, None);
             self.logical_device.destroy_device(None);
             self.instance.destroy_instance(None);
         }

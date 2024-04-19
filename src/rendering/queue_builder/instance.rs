@@ -23,7 +23,6 @@ use vulkanalia::vk::{
     ExtDebugUtilsExtension
 };
 
-use crate::rendering::RenderingPipelineConfig;
 use crate::rendering::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
@@ -37,7 +36,7 @@ use super::{
 
 
 pub struct InstanceBuilder{
-    pub entry: Entry,
+    pub entry: Box<Entry>,
 }
 
 impl InstanceBuilder {
@@ -82,10 +81,11 @@ impl InstanceBuilder {
         };
 
         let messenger = if use_validation_layer {
-            unsafe {
-                Some(instance.create_debug_utils_messenger_ext(&debug_info, None)
-                    .map_err(|err| ErrorCode(err))?)
-            }
+            let messenger = unsafe {
+                instance.create_debug_utils_messenger_ext(&debug_info, None)
+                    .map_err(|err| ErrorCode(err))?
+            };
+            Some(Box::new(messenger))
         } else {
             None
         };
@@ -97,9 +97,9 @@ impl InstanceBuilder {
 
         Result::Ok(PhysicalDeviceBuilder {
             entry: self.entry,
-            instance,
-            messenger,
-            surface: window_surface,
+            instance: Box::new(instance),
+            messenger: messenger,
+            surface: Box::new(window_surface),
         })
     }
 }
