@@ -27,6 +27,8 @@ fn main(){
     let rendering_queue = RenderingQueue::create(&config)
         .expect("rendering exception");
 
+    rendering_queue.create_pipeline();
+
     window.run()
         .expect("main loop exception");
 

@@ -91,6 +91,7 @@ impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
             queue_families: self.queue_families,
             surface: self.surface,
             swap_chain,
+            swap_chain_extent: extent,
             swap_chain_images,
             swap_chain_image_views
         });

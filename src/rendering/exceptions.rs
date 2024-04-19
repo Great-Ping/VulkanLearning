@@ -7,4 +7,5 @@ pub enum RenderingError {
         error: Error,
         path_to_shader: String
     },
+    CreatePipeLineError(&'static str)
 }

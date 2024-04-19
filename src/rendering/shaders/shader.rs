@@ -1,29 +1,24 @@
 use std::fs;
+use std::fs::File;
 use std::io::Read;
+use std::path::PathBuf;
 use crate::rendering::RenderingError;
 use crate::rendering::RenderingError::LoadShadersError;
 
-struct Shader {
+pub struct Shader {
 
 }
 
 impl Shader{
-    fn read_as_bytes(path: &str, buffer: &mut Vec<u8>) -> Result<usize, RenderingError>{
+    pub fn read_file(path: &PathBuf, buffer: &mut Vec<u8>) -> Result<usize, RenderingError>{
         let mut shader_file = fs::File::open(path)
             .map_err(|err| LoadShadersError {
-                path_to_shader: String::from(path), error: err
+                path_to_shader: String::from(path.to_str().unwrap()), error: err
             })?;
-
-        let file_metadata =  shader_file.metadata()
-            .map_err(|err| LoadShadersError {
-                path_to_shader: String::from(path), error: err
-            })?;
-
-        let file_size = file_metadata.len();
 
         let size = shader_file.read_to_end(buffer)
             .map_err(|err| LoadShadersError {
-                path_to_shader: String::from(path), error: err
+                path_to_shader: String::from(path.to_str().unwrap()), error: err
             })?;
 
         Result::Ok(size)
