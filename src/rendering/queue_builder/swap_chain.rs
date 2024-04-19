@@ -14,9 +14,7 @@ use crate::rendering::queue_builder::RenderingQueueBuildError::{ErrorCode, Error
 use crate::rendering::rendering_queue_config::RenderingResolution;
 use crate::rendering::RenderingPipelineConfig;
 
-pub struct SwapChainBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub config: &'config RenderingPipelineConfig<TWindow>,
+pub struct SwapChainBuilder {
     pub entry: Entry,
     pub instance: Instance,
     pub messenger: Option<DebugUtilsMessengerEXT>,
@@ -27,9 +25,8 @@ pub struct SwapChainBuilder<'config, TWindow>
     pub swap_chain_support: SwapСhainSupport,
 }
 
-impl<'config, TWindow> SwapChainBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_swap_chain(self, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
+impl SwapChainBuilder {
+    pub fn create_swap_chain(self, rendering_resolution: RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
 
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
@@ -148,12 +145,12 @@ fn choose_swap_chain_extent(
 
    let extent = Extent2D::builder()
         .width(rendering_resolution.width.clamp(
-            capabilities.min_image_count,
-            capabilities.max_image_count
+            capabilities.min_image_extent.width,
+            capabilities.max_image_extent.width
         ))
         .height(rendering_resolution.height.clamp(
-            capabilities.min_image_count,
-            capabilities.max_image_count
+            capabilities.min_image_extent.height,
+            capabilities.max_image_extent.height
         ))
        .build();
 
