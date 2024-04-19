@@ -26,23 +26,15 @@ use super::{
     QueueFamilyIndices
 };
 
-pub struct InitialBuilder<'config, TWindow>
-    where TWindow: HasWindowHandle + HasDisplayHandle {
-    pub config: &'config RenderingPipelineConfig<TWindow>,
-}
+pub struct InitialBuilder;
 
-impl<'config, TWindow> InitialBuilder<'config, TWindow>
-    where TWindow: HasWindowHandle+HasDisplayHandle {
+impl InitialBuilder {
 
-    pub fn new(
-        config: &'config RenderingPipelineConfig<TWindow>
-    ) -> InitialBuilder<'config, TWindow> {
-        Self {
-            config
-        }
+    pub fn new() -> InitialBuilder {
+        Self
     }
 
-    pub fn create_entry(self) -> Result<InstanceBuilder<'config, TWindow>, RenderingQueueBuildError>{
+    pub fn create_entry(self) -> Result<InstanceBuilder, RenderingQueueBuildError>{
         let entry = unsafe {
             let loader = LibloadingLoader::new(LIBRARY)
                 .map_err(|err| ErrorMessage("Load library error"))?;
@@ -51,7 +43,6 @@ impl<'config, TWindow> InitialBuilder<'config, TWindow>
         };
 
         Result::Ok( InstanceBuilder {
-            config: self.config,
             entry
         })
     }
@@ -91,10 +82,8 @@ impl EndBuilder{
 
 impl RenderingQueue {
 
-    pub fn builder<TWindow>(
-        config: &RenderingPipelineConfig<TWindow>
-    ) -> InitialBuilder<TWindow>
-    where TWindow: HasWindowHandle+HasDisplayHandle {
-        return InitialBuilder::new(config);
+    pub fn builder(
+    ) -> InitialBuilder {
+        return InitialBuilder::new();
     }
 }

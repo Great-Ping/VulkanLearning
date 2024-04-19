@@ -36,15 +36,18 @@ use super::{
     VALIDATION_LAYER};
 
 
-pub struct InstanceBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub config: &'config RenderingPipelineConfig<TWindow>,
+pub struct InstanceBuilder{
     pub entry: Entry,
 }
 
-impl<'config, TWindow> InstanceBuilder<'config, TWindow>
+impl InstanceBuilder {
+    pub fn create_instance<TWindow>(
+        self,
+        window: &TWindow,
+        use_validation_layer: bool
+    ) -> Result<PhysicalDeviceBuilder, RenderingQueueBuildError>
     where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_instance(self) -> Result<PhysicalDeviceBuilder<'config, TWindow>, RenderingQueueBuildError>{
+
         let application_info = ApplicationInfo::builder()
             .application_name(b"Vulkan Learning\0")
             .application_version(make_version(1, 0, 0))
@@ -53,8 +56,10 @@ impl<'config, TWindow> InstanceBuilder<'config, TWindow>
             .api_version(make_version(1, 0, 0))
             .build();
 
-        let extensions = get_extensions(self.config);
-        let layers = unsafe { get_layers(&self.entry, self.config)?};
+        let extensions = get_extensions(window, use_validation_layer);
+        let layers = unsafe {
+            get_layers(&self.entry, use_validation_layer)?
+        };
 
         let mut instance_info = InstanceCreateInfo::builder()
             .application_info(&application_info)
@@ -65,7 +70,7 @@ impl<'config, TWindow> InstanceBuilder<'config, TWindow>
 
         let mut debug_info=  get_debug_info();
 
-        if self.config.use_validation_layer {
+        if use_validation_layer {
             instance_info = instance_info.push_next(&mut debug_info);
         }
 
@@ -76,7 +81,7 @@ impl<'config, TWindow> InstanceBuilder<'config, TWindow>
                 .map_err(|err| ErrorCode(err))?
         };
 
-        let messenger = if self.config.use_validation_layer {
+        let messenger = if use_validation_layer {
             unsafe {
                 Some(instance.create_debug_utils_messenger_ext(&debug_info, None)
                     .map_err(|err| ErrorCode(err))?)
@@ -86,12 +91,11 @@ impl<'config, TWindow> InstanceBuilder<'config, TWindow>
         };
 
         let window_surface = unsafe {
-            create_surface(&instance, &self.config.window, &self.config.window)
+            create_surface(&instance, window, window)
                 .map_err(|err| ErrorCode(err))?
         };
 
         Result::Ok(PhysicalDeviceBuilder {
-            config: self.config,
             entry: self.entry,
             instance,
             messenger,
@@ -101,26 +105,27 @@ impl<'config, TWindow> InstanceBuilder<'config, TWindow>
 }
 
 fn get_extensions<TWindow>(
-    config: &RenderingPipelineConfig<TWindow>
+    window: &TWindow,
+    use_validation_layer: bool
 ) -> Vec<*const c_char>
-    where TWindow: HasDisplayHandle + HasWindowHandle{
-    let mut extensions = get_required_instance_extensions(&config.window)
+where TWindow: HasWindowHandle {
+
+    let mut extensions = get_required_instance_extensions(window)
         .iter()
         .map(|extension|extension.as_ptr())
         .collect::<Vec<_>>();
 
-    if config.use_validation_layer {
+    if use_validation_layer {
         extensions.push(vk::EXT_DEBUG_UTILS_EXTENSION.name.as_ptr())
     }
 
     return extensions;
 }
 
-unsafe fn get_layers<TWindow>(
+unsafe fn get_layers(
     entry: &Entry,
-    config: &RenderingPipelineConfig<TWindow>
-) -> Result<Vec<*const c_char>, RenderingQueueBuildError>
-    where TWindow: HasDisplayHandle + HasWindowHandle{
+    use_validation_layer: bool
+) -> Result<Vec<*const c_char>, RenderingQueueBuildError> {
     let layers = entry
         .enumerate_instance_layer_properties()
         .map_err(|err| ErrorCode(err))?;
@@ -130,7 +135,7 @@ unsafe fn get_layers<TWindow>(
         .map(|layer| layer.layer_name)
         .collect::<HashSet<_>>();
 
-    if !config.use_validation_layer {
+    if use_validation_layer {
         Result::Ok(Vec::new())
     } else if available_layers.contains(&VALIDATION_LAYER) {
         Result::Ok(vec![VALIDATION_LAYER.as_ptr()])

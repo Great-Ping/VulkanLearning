@@ -89,12 +89,12 @@ impl RenderingQueue {
         config: &RenderingPipelineConfig<&TWindow>
     ) -> Result<RenderingQueue, RenderingQueueBuildError>
     where TWindow: HasWindowHandle+HasDisplayHandle {
-        let pipeline = Self::builder(config)
+        let pipeline = Self::builder()
             .create_entry()?
-            .create_instance()?
+            .create_instance(&config.window, config.use_validation_layer)?
             .choose_physical_device()?
-            .create_logical_device()?
-            .create_swap_chain(vk::SwapchainKHR::null())?
+            .create_logical_device(config.use_validation_layer)?
+            .create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?
             .build();
 
         Result::Ok(pipeline)

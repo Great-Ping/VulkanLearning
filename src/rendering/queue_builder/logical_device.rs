@@ -33,9 +33,7 @@ use super::{
 
 pub const REQUIRED_EXTENSIONS: &[ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
-pub struct LogicalDeviceBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub config: &'config RenderingPipelineConfig<TWindow>,
+pub struct LogicalDeviceBuilder {
     pub entry: Entry,
     pub messenger: Option<DebugUtilsMessengerEXT>,
     pub instance: Instance,
@@ -45,16 +43,15 @@ pub struct LogicalDeviceBuilder<'config, TWindow>
     pub swap_chain_support: SwapСhainSupport,
 }
 
-impl<'config, TWindow>  LogicalDeviceBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn create_logical_device(self) -> Result<SwapChainBuilder<'config, TWindow>, RenderingQueueBuildError>{
+impl LogicalDeviceBuilder {
+    pub fn create_logical_device(self, use_validation_layer: bool) -> Result<SwapChainBuilder, RenderingQueueBuildError>{
         let queue_infos = unsafe {
             create_queue_infos(
                 &self.queue_families
             )
         };
 
-        let layers = get_layers(self.config);
+        let layers = get_layers(use_validation_layer);
         let extensions = get_extensions();
         let features = PhysicalDeviceFeatures::builder()
             .build();
@@ -72,7 +69,6 @@ impl<'config, TWindow>  LogicalDeviceBuilder<'config, TWindow>
         };
 
         Result::Ok(SwapChainBuilder {
-            config: self.config,
             entry: self.entry,
             instance: self.instance,
             messenger: self.messenger,
@@ -92,11 +88,8 @@ fn get_extensions() -> Vec<*const c_char> {
         .collect::<Vec<_>>()
 }
 
-fn get_layers<TWindow>(
-    config: &RenderingPipelineConfig<TWindow>
-) -> Vec<*const c_char>
-    where TWindow: HasDisplayHandle + HasWindowHandle{
-    if config.use_validation_layer {
+fn get_layers(use_validation_layer: bool) -> Vec<*const c_char> {
+    if use_validation_layer {
         vec![VALIDATION_LAYER.as_ptr()]
     } else {
         Vec::new()

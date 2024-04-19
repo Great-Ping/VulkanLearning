@@ -26,13 +26,13 @@ pub struct SwapChainBuilder {
 }
 
 impl SwapChainBuilder {
-    pub fn create_swap_chain(self, rendering_resolution: RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
+    pub fn create_swap_chain(self, rendering_resolution: &RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
 
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
             .ok_or(ErrorMessage("Choose format error"))?;
         let present_mode = choose_present_mode(&support.present_modes);
-        let extent = choose_swap_chain_extent(&self.config.rendering_resolution, &support.capabilities);
+        let extent = choose_swap_chain_extent(rendering_resolution, &support.capabilities);
 
         let image_count = (support.capabilities.min_image_count + 1).clamp(
             support.capabilities.min_image_count,

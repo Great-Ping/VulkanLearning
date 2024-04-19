@@ -38,7 +38,12 @@ pub struct QueueFamilyIndices{
     pub present: u32
 }
 impl QueueFamilyIndices{
-    pub fn create(instance: &Instance, device: &PhysicalDevice, surface: &SurfaceKHR) -> Result<QueueFamilyIndices, RenderingQueueBuildError>{
+    pub fn create(
+        instance: &Instance,
+        device: &PhysicalDevice,
+        surface: &SurfaceKHR
+    ) -> Result<QueueFamilyIndices, RenderingQueueBuildError> {
+
         let queue_properties = unsafe {
             instance
                 .get_physical_device_queue_family_properties(device.clone())
@@ -65,18 +70,15 @@ impl QueueFamilyIndices{
     }
 }
 
-pub struct PhysicalDeviceBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub config: &'config RenderingPipelineConfig<TWindow>,
+pub struct PhysicalDeviceBuilder{
     pub entry: Entry,
     pub instance: Instance,
     pub messenger: Option<DebugUtilsMessengerEXT>,
     pub surface: SurfaceKHR,
 }
 
-impl <'config, TWindow> PhysicalDeviceBuilder<'config, TWindow>
-    where TWindow: HasDisplayHandle + HasWindowHandle {
-    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuilder<'config, TWindow>, RenderingQueueBuildError>{
+impl PhysicalDeviceBuilder {
+    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuilder, RenderingQueueBuildError>{
         let devices =  unsafe {
             self.instance
                 .enumerate_physical_devices()
@@ -93,7 +95,6 @@ impl <'config, TWindow> PhysicalDeviceBuilder<'config, TWindow>
 
             if check_device_suitable(&self.instance, &device, &swap_chain_support).is_ok() {
                 return Result::Ok(LogicalDeviceBuilder {
-                    config: self.config,
                     entry: self.entry,
                     messenger: self.messenger,
                     instance: self.instance,
