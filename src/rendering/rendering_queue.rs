@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use std::env;
 use std::ops::Range;
-use log::debug;
+use log::{debug, info};
 use winit::raw_window_handle::{
     HasDisplayHandle,
     HasWindowHandle
@@ -89,13 +89,42 @@ impl RenderingQueue {
         config: &RenderingPipelineConfig<&TWindow>
     ) -> Result<RenderingQueue, RenderingQueueBuildError>
     where TWindow: HasWindowHandle+HasDisplayHandle {
+        let now = std::time::Instant::now();
+
         let pipeline = Self::builder()
-            .create_entry()?
-            .create_instance(&config.window, config.use_validation_layer)?
-            .choose_physical_device()?
-            .create_logical_device(config.use_validation_layer)?
-            .create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?
-            .build();
+            .create_entry()?;
+
+        let elapsed = now.elapsed();
+        info!("Entry creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+
+        let pipeline= pipeline.create_instance(&config.window, config.use_validation_layer)?;
+
+        let elapsed = now.elapsed();
+        info!("Instance creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.choose_physical_device()?;
+
+        let elapsed = now.elapsed();
+        info!("Physical device creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.create_logical_device(config.use_validation_layer)?;
+
+        let elapsed = now.elapsed();
+        info!("Logical device creation duration: {:?}", elapsed);
+
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?;
+
+        let elapsed = now.elapsed();
+        info!("Swap chain creation duration: {:?}", elapsed);
+
+        let now = std::time::Instant::now();
+        let pipeline = pipeline.build();
 
         Result::Ok(pipeline)
     }

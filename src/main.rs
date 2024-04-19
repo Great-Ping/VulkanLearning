@@ -1,5 +1,6 @@
 use std::env;
 use std::fs::File;
+use log::{info, LevelFilter};
 use application::ApplicationWindow;
 use crate::rendering::{RenderingQueue, RenderingPipelineConfig, RenderingResolution};
 use simple_logger::SimpleLogger;
@@ -14,6 +15,8 @@ fn main(){
         .init()
         .expect("logger initialization exception");
 
+    log::set_max_level(LevelFilter::Info);
+
     let window =
         ApplicationWindow::new()
             .expect("window creation exception");
@@ -24,8 +27,14 @@ fn main(){
         rendering_resolution: RenderingResolution::from(window.inner_size())
     };
 
+    let now = std::time::Instant::now();
+
     let rendering_queue = RenderingQueue::create(&config)
         .expect("rendering exception");
+
+    let elapsed = now.elapsed();
+    info!("Queue creation duration: {:?}", elapsed);
+
 
     rendering_queue.create_pipeline();
 
