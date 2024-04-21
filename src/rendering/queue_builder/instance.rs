@@ -31,21 +31,21 @@ use crate::rendering::RenderingQueueBuildError::{
 
 use super::{
     get_debug_info,
-    PhysicalDeviceBuilder,
+    PhysicalDeviceBuildStage,
     RenderingQueueBuildError,
     VALIDATION_LAYER};
 
 
-pub struct InstanceBuilder{
+pub struct InstanceBuildStage {
     pub entry: Entry,
 }
 
-impl InstanceBuilder {
+impl InstanceBuildStage {
     pub fn create_instance<TWindow>(
         self,
         window: &TWindow,
         use_validation_layer: bool
-    ) -> Result<PhysicalDeviceBuilder, RenderingQueueBuildError>
+    ) -> Result<PhysicalDeviceBuildStage, RenderingQueueBuildError>
     where TWindow: HasDisplayHandle + HasWindowHandle {
 
         let application_info = ApplicationInfo::builder()
@@ -95,7 +95,7 @@ impl InstanceBuilder {
                 .map_err(|err| ErrorCode(err))?
         };
 
-        Result::Ok(PhysicalDeviceBuilder {
+        Result::Ok(PhysicalDeviceBuildStage {
             entry: self.entry,
             instance,
             messenger,

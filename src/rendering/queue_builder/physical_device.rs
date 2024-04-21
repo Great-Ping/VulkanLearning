@@ -29,7 +29,7 @@ use super::{
     SwapСhainSupport,
     REQUIRED_EXTENSIONS,
     RenderingQueueBuildError,
-    LogicalDeviceBuilder
+    LogicalDeviceBuildStage
 };
 
 #[derive(Debug)]
@@ -70,15 +70,15 @@ impl QueueFamilyIndices{
     }
 }
 
-pub struct PhysicalDeviceBuilder{
+pub struct PhysicalDeviceBuildStage {
     pub entry: Entry,
     pub instance: Instance,
     pub messenger: Option<DebugUtilsMessengerEXT>,
     pub surface: SurfaceKHR,
 }
 
-impl PhysicalDeviceBuilder {
-    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuilder, RenderingQueueBuildError>{
+impl PhysicalDeviceBuildStage {
+    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuildStage, RenderingQueueBuildError>{
         let devices =  unsafe {
             self.instance
                 .enumerate_physical_devices()
@@ -94,7 +94,7 @@ impl PhysicalDeviceBuilder {
             )?;
 
             if check_device_suitable(&self.instance, &device, &swap_chain_support).is_ok() {
-                return Result::Ok(LogicalDeviceBuilder {
+                return Result::Ok(LogicalDeviceBuildStage {
                     entry: self.entry,
                     messenger: self.messenger,
                     instance: self.instance,

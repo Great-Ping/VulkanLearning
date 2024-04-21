@@ -26,14 +26,14 @@ use crate::rendering::RenderingPipelineConfig;
 use super::{
     RenderingQueueBuildError,
     QueueFamilyIndices,
-    SwapChainBuilder,
+    SwapChainBuildStage,
     SwapСhainSupport,
     VALIDATION_LAYER
 };
 
 pub const REQUIRED_EXTENSIONS: &[ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
-pub struct LogicalDeviceBuilder {
+pub struct LogicalDeviceBuildStage {
     pub entry: Entry,
     pub messenger: Option<DebugUtilsMessengerEXT>,
     pub instance: Instance,
@@ -43,8 +43,8 @@ pub struct LogicalDeviceBuilder {
     pub swap_chain_support: SwapСhainSupport,
 }
 
-impl LogicalDeviceBuilder {
-    pub fn create_logical_device(self, use_validation_layer: bool) -> Result<SwapChainBuilder, RenderingQueueBuildError>{
+impl LogicalDeviceBuildStage {
+    pub fn create_logical_device(self, use_validation_layer: bool) -> Result<SwapChainBuildStage, RenderingQueueBuildError>{
         let queue_infos = unsafe {
             create_queue_infos(
                 &self.queue_families
@@ -68,7 +68,7 @@ impl LogicalDeviceBuilder {
                 .map_err(|err| ErrorCode(err))?
         };
 
-        Result::Ok(SwapChainBuilder {
+        Result::Ok(SwapChainBuildStage {
             entry: self.entry,
             instance: self.instance,
             messenger: self.messenger,

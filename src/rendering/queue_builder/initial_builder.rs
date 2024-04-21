@@ -21,20 +21,20 @@ use crate::rendering::{
 };
 
 use super::{
-    InstanceBuilder,
+    InstanceBuildStage,
     RenderingQueueBuildError,
     QueueFamilyIndices
 };
 
-pub struct InitialBuilder;
+pub struct RenderingQueueBuilder;
 
-impl InitialBuilder {
+impl RenderingQueueBuilder {
 
-    pub fn new() -> InitialBuilder {
+    pub fn new() -> RenderingQueueBuilder {
         Self
     }
 
-    pub fn create_entry(self) -> Result<InstanceBuilder, RenderingQueueBuildError>{
+    pub fn create_entry(self) -> Result<InstanceBuildStage, RenderingQueueBuildError>{
         let entry = unsafe {
             let loader = LibloadingLoader::new(LIBRARY)
                 .map_err(|err| ErrorMessage("Load library error"))?;
@@ -42,13 +42,13 @@ impl InitialBuilder {
                 .map_err(|_| ErrorMessage("Entry create error"))?
         };
 
-        Result::Ok( InstanceBuilder {
+        Result::Ok( InstanceBuildStage {
             entry
         })
     }
 }
 
-pub struct EndBuilder{
+pub struct EndBuildStage {
     pub entry: Entry,
     pub instance: Instance,
     pub messenger: Option<DebugUtilsMessengerEXT>,
@@ -62,7 +62,7 @@ pub struct EndBuilder{
     pub swap_chain_image_views: Vec<ImageView>
 }
 
-impl EndBuilder{
+impl EndBuildStage {
     pub fn build(self) -> RenderingQueue {
         return RenderingQueue::new (
             self.entry,
@@ -83,7 +83,7 @@ impl EndBuilder{
 impl RenderingQueue {
 
     pub fn builder(
-    ) -> InitialBuilder {
-        return InitialBuilder::new();
+    ) -> RenderingQueueBuilder {
+        return RenderingQueueBuilder::new();
     }
 }

@@ -9,12 +9,12 @@ use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
 
 use crate::rendering::queue_builder::{RenderingQueueBuildError, QueueFamilyIndices};
-use crate::rendering::queue_builder::initial_builder::EndBuilder;
+use crate::rendering::queue_builder::initial_builder::EndBuildStage;
 use crate::rendering::queue_builder::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
 use crate::rendering::rendering_queue_config::RenderingResolution;
 use crate::rendering::RenderingPipelineConfig;
 
-pub struct SwapChainBuilder {
+pub struct SwapChainBuildStage {
     pub entry: Entry,
     pub instance: Instance,
     pub messenger: Option<DebugUtilsMessengerEXT>,
@@ -25,8 +25,8 @@ pub struct SwapChainBuilder {
     pub swap_chain_support: SwapСhainSupport,
 }
 
-impl SwapChainBuilder {
-    pub fn create_swap_chain(self, rendering_resolution: &RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuilder, RenderingQueueBuildError> {
+impl SwapChainBuildStage {
+    pub fn create_swap_chain(self, rendering_resolution: &RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuildStage, RenderingQueueBuildError> {
 
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
@@ -79,7 +79,7 @@ impl SwapChainBuilder {
             &format.format
         )?;
 
-        return Result::Ok(EndBuilder {
+        return Result::Ok(EndBuildStage {
             entry: self.entry,
             instance: self.instance,
             messenger: self.messenger,
