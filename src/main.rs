@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::File;
-use log::{info, LevelFilter};
+use log::{debug, info, LevelFilter};
 use application::ApplicationWindow;
 use crate::rendering::{RenderingQueue, RenderingPipelineConfig, RenderingResolution};
 use simple_logger::SimpleLogger;
@@ -34,7 +34,6 @@ fn main(){
 
     let elapsed = now.elapsed();
     info!("Queue creation duration: {:?}", elapsed);
-
 
     rendering_queue.create_pipeline();
 

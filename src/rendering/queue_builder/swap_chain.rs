@@ -4,30 +4,43 @@ use vulkanalia::{
     Entry,
     Instance
 };
-use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, PhysicalDevice, PresentModeKHR, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR, SwapchainCreateInfoKHR, SwapchainKHR, Format, Extent2D, SharingMode, ImageUsageFlags, CompositeAlphaFlagsKHR, KhrSwapchainExtension, DebugUtilsMessengerEXT, Image, ComponentSwizzle, ComponentMapping, ImageSubresourceRange, ImageViewCreateInfo, ImageViewType, ImageAspectFlags, DeviceV1_0, ImageView};
-use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+use vulkanalia::vk;
+use vulkanalia::vk::{DeviceV1_0, HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension};
 
-
-use crate::rendering::queue_builder::{RenderingQueueBuildError, QueueFamilyIndices};
-use crate::rendering::queue_builder::initial_builder::EndBuildStage;
-use crate::rendering::queue_builder::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
+use super::{
+    RenderingQueueBuildError,
+    QueueFamilyIndices,
+    initial_builder::EndBuildStage
+};
+use super::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
 use crate::rendering::rendering_queue_config::RenderingResolution;
-use crate::rendering::RenderingPipelineConfig;
 
-pub struct SwapChainBuildStage {
-    pub entry: Entry,
-    pub instance: Instance,
-    pub messenger: Option<DebugUtilsMessengerEXT>,
-    pub surface: SurfaceKHR,
-    pub physical_device: PhysicalDevice,
-    pub logical_device: Device,
-    pub queue_families: QueueFamilyIndices,
-    pub swap_chain_support: SwapСhainSupport,
+#[derive(Debug)]
+pub struct SwapChainData{
+    pub swap_chain: vk::SwapchainKHR,
+    pub extent: vk::Extent2D,
+    pub images: Vec<vk::Image>,
+    pub image_views: Vec<vk::ImageView>
 }
 
-impl SwapChainBuildStage {
-    pub fn create_swap_chain(self, rendering_resolution: &RenderingResolution, old_swapchain: SwapchainKHR) -> Result<EndBuildStage, RenderingQueueBuildError> {
+pub struct SwapChainBuildStage {
+    pub entry: Box<Entry>,
+    pub instance: Box<Instance>,
+    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
+    pub surface: Box<vk::SurfaceKHR>,
+    pub physical_device: Box<vk::PhysicalDevice>,
+    pub logical_device: Box<Device>,
+    pub queue_families: QueueFamilyIndices,
+    pub swap_chain_support: Box<SwapСhainSupport>,
+}
 
+impl SwapChainBuildStage  {
+    pub fn create_swap_chain(
+        self,
+        rendering_resolution: &RenderingResolution,
+        old_swapchain: vk::SwapchainKHR
+    ) -> Result<EndBuildStage, RenderingQueueBuildError>
+    {
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
             .ok_or(ErrorMessage("Choose format error"))?;
@@ -41,23 +54,23 @@ impl SwapChainBuildStage {
 
         let queue_family_indices = self.queue_families.get_unique_indices();
         let sharing_mode = if queue_family_indices.iter().count() > 1 {
-            SharingMode::CONCURRENT
+            vk::SharingMode::CONCURRENT
         } else {
-            SharingMode::EXCLUSIVE
+            vk::SharingMode::EXCLUSIVE
         };
 
-        let swap_chain_info = SwapchainCreateInfoKHR::builder()
-            .surface(self.surface.clone())
+        let swap_chain_info = vk::SwapchainCreateInfoKHR::builder()
+            .surface(*self.surface)
             .min_image_count(image_count)
             .image_format(format.format)
             .image_color_space(format.color_space)
             .image_extent(extent)
             .image_array_layers(1)
-            .image_usage(ImageUsageFlags::COLOR_ATTACHMENT)
+            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
             .image_sharing_mode(sharing_mode)
             .queue_family_indices(&queue_family_indices)
             .pre_transform(support.capabilities.current_transform)
-            .composite_alpha(CompositeAlphaFlagsKHR::OPAQUE)
+            .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
             .present_mode(present_mode)
             .clipped(true)
             .old_swapchain(old_swapchain)
@@ -79,6 +92,13 @@ impl SwapChainBuildStage {
             &format.format
         )?;
 
+        let swap_chain_data  = SwapChainData{
+            swap_chain,
+            extent,
+            images: swap_chain_images,
+            image_views: swap_chain_image_views,
+        };
+
         return Result::Ok(EndBuildStage {
             entry: self.entry,
             instance: self.instance,
@@ -87,10 +107,7 @@ impl SwapChainBuildStage {
             logical_device: self.logical_device,
             queue_families: self.queue_families,
             surface: self.surface,
-            swap_chain,
-            swap_chain_extent: extent,
-            swap_chain_images,
-            swap_chain_image_views
+            swap_chain: Box::new(swap_chain_data)
         });
     }
 }
@@ -98,17 +115,18 @@ impl SwapChainBuildStage {
 
 #[derive(Clone)]
 pub struct SwapСhainSupport {
-    pub capabilities: SurfaceCapabilitiesKHR,
-    pub formats: Vec<SurfaceFormatKHR>,
-    pub present_modes: Vec<PresentModeKHR>
+    pub capabilities: vk::SurfaceCapabilitiesKHR,
+    pub formats: Vec<vk::SurfaceFormatKHR>,
+    pub present_modes: Vec<vk::PresentModeKHR>
 }
 
 impl SwapСhainSupport {
     pub fn create(
         instance: &Instance,
-        surface: &SurfaceKHR,
-        physical_device: &PhysicalDevice
-    ) -> Result<Self, RenderingQueueBuildError> {
+        surface: &vk::SurfaceKHR,
+        physical_device: &vk::PhysicalDevice
+    ) -> Result<Self, RenderingQueueBuildError>
+    {
         let capabilities = unsafe {
             instance
                 .get_physical_device_surface_capabilities_khr(physical_device.clone(), surface.clone())
@@ -137,13 +155,14 @@ impl SwapСhainSupport {
 
 fn choose_swap_chain_extent(
     rendering_resolution: &RenderingResolution,
-    capabilities: &SurfaceCapabilitiesKHR
-) -> Extent2D {
+    capabilities: &vk::SurfaceCapabilitiesKHR
+) -> vk::Extent2D
+{
     if capabilities.current_extent.width != u32::MAX{
         return  capabilities.current_extent
     }
 
-   let extent = Extent2D::builder()
+   let extent = vk::Extent2D::builder()
         .width(rendering_resolution.width.clamp(
             capabilities.min_image_extent.width,
             capabilities.max_image_extent.width
@@ -157,23 +176,27 @@ fn choose_swap_chain_extent(
     return extent;
 }
 
-fn choose_present_mode(supported_present_modes: &Vec<PresentModeKHR>) -> PresentModeKHR {
+fn choose_present_mode(
+    supported_present_modes: &Vec<vk::PresentModeKHR>
+) -> vk::PresentModeKHR
+{
     let supported_present_modes = supported_present_modes
         .iter()
         .collect::<HashSet<_>>();
 
-    if supported_present_modes.contains(&PresentModeKHR::MAILBOX) {
-        return PresentModeKHR::MAILBOX;
+    if supported_present_modes.contains(&vk::PresentModeKHR::MAILBOX) {
+        return vk::PresentModeKHR::MAILBOX;
     }
 
-    return PresentModeKHR::FIFO;
+    return vk::PresentModeKHR::FIFO;
 }
 
 fn choose_swap_chain_surface_format(
-    formats: &Vec<SurfaceFormatKHR>
-) -> Option<SurfaceFormatKHR> {
+    formats: &Vec<vk::SurfaceFormatKHR>
+) -> Option<vk::SurfaceFormatKHR>
+{
     for availableFormat in formats {
-        if availableFormat.format == Format::B8G8R8A8_SRGB{
+        if availableFormat.format == vk::Format::B8G8R8A8_SRGB{
             return Some(availableFormat.clone());
         }
     }
@@ -182,29 +205,30 @@ fn choose_swap_chain_surface_format(
 
 fn create_swap_chain_image_views(
     device: &Device,
-    images: &Vec<Image>,
-    format: &Format,
-) -> Result<Vec<ImageView>, RenderingQueueBuildError> {
+    images: &Vec<vk::Image>,
+    format: &vk::Format,
+) -> Result<Vec<vk::ImageView>, RenderingQueueBuildError>
+{
     let mut image_views = Vec::with_capacity(images.len());
 
     for image in images {
-        let components = ComponentMapping::builder()
-            .r(ComponentSwizzle::IDENTITY)
-            .g(ComponentSwizzle::IDENTITY)
-            .b(ComponentSwizzle::IDENTITY)
-            .a(ComponentSwizzle::IDENTITY);
+        let components = vk::ComponentMapping::builder()
+            .r(vk::ComponentSwizzle::IDENTITY)
+            .g(vk::ComponentSwizzle::IDENTITY)
+            .b(vk::ComponentSwizzle::IDENTITY)
+            .a(vk::ComponentSwizzle::IDENTITY);
 
-        let subresource_range = ImageSubresourceRange::builder()
-            .aspect_mask(ImageAspectFlags::COLOR)
+        let subresource_range = vk::ImageSubresourceRange::builder()
+            .aspect_mask(vk::ImageAspectFlags::COLOR)
             .base_mip_level(0)
             .level_count(1)
             .base_array_layer(0)
             .layer_count(1)
             .build();
 
-        let view_info = ImageViewCreateInfo::builder()
+        let view_info = vk::ImageViewCreateInfo::builder()
             .image(image.clone())
-            .view_type(ImageViewType::_2D)
+            .view_type(vk::ImageViewType::_2D)
             .format(format.clone())
             .components(components)
             .subresource_range(subresource_range)

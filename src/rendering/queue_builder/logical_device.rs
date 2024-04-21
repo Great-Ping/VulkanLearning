@@ -34,13 +34,13 @@ use super::{
 pub const REQUIRED_EXTENSIONS: &[ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
 pub struct LogicalDeviceBuildStage {
-    pub entry: Entry,
-    pub messenger: Option<DebugUtilsMessengerEXT>,
-    pub instance: Instance,
-    pub surface: SurfaceKHR,
-    pub physical_device: PhysicalDevice,
+    pub entry: Box<Entry>,
+    pub messenger: Option<Box<DebugUtilsMessengerEXT>>,
+    pub instance: Box<Instance>,
+    pub surface: Box<SurfaceKHR>,
+    pub physical_device: Box<PhysicalDevice>,
     pub queue_families: QueueFamilyIndices,
-    pub swap_chain_support: SwapСhainSupport,
+    pub swap_chain_support: Box<SwapСhainSupport>,
 }
 
 impl LogicalDeviceBuildStage {
@@ -64,7 +64,7 @@ impl LogicalDeviceBuildStage {
             .build();
 
         let logical_device = unsafe {
-            self.instance.create_device(self.physical_device, &device_info, None)
+            self.instance.create_device(*self.physical_device, &device_info, None)
                 .map_err(|err| ErrorCode(err))?
         };
 
@@ -73,7 +73,7 @@ impl LogicalDeviceBuildStage {
             instance: self.instance,
             messenger: self.messenger,
             surface: self.surface,
-            logical_device,
+            logical_device: Box::new(logical_device),
             queue_families: self.queue_families,
             physical_device: self.physical_device,
             swap_chain_support: self.swap_chain_support,

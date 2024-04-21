@@ -1,25 +1,14 @@
 use std::collections::HashSet;
 
-use winit::raw_window_handle::{HasDisplayHandle, HasWindowHandle};
-
 use vulkanalia::{
     Entry,
     Instance,
     prelude::v1_0::InstanceV1_0
 };
 
-use vulkanalia::vk::{
-    DebugUtilsMessengerEXT,
-    KhrSurfaceExtension,
-    PhysicalDevice,
-    PhysicalDeviceType,
-    QueueFamilyProperties,
-    QueueFlags,
-    SurfaceKHR,
-    TRUE
-};
+use vulkanalia::vk;
+use vulkanalia::vk::KhrSurfaceExtension;
 
-use crate::rendering::RenderingPipelineConfig;
 use crate::rendering::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
@@ -40,8 +29,8 @@ pub struct QueueFamilyIndices{
 impl QueueFamilyIndices{
     pub fn create(
         instance: &Instance,
-        device: &PhysicalDevice,
-        surface: &SurfaceKHR
+        device: &vk::PhysicalDevice,
+        surface: &vk::SurfaceKHR
     ) -> Result<QueueFamilyIndices, RenderingQueueBuildError> {
 
         let queue_properties = unsafe {
@@ -51,7 +40,7 @@ impl QueueFamilyIndices{
 
         let graphics = find_present_queue_index(&queue_properties, instance, device, surface)
             .ok_or(ErrorMessage("Present queue family is not supported"))?;
-        let present = find_queue_index(&queue_properties, QueueFlags::GRAPHICS)
+        let present = find_queue_index(&queue_properties, vk::QueueFlags::GRAPHICS)
             .ok_or(ErrorMessage("Graphics queue family is not supported"))?;
 
 
@@ -70,15 +59,17 @@ impl QueueFamilyIndices{
     }
 }
 
-pub struct PhysicalDeviceBuildStage {
-    pub entry: Entry,
-    pub instance: Instance,
-    pub messenger: Option<DebugUtilsMessengerEXT>,
-    pub surface: SurfaceKHR,
+pub struct PhysicalDeviceBuildStage{
+    pub entry: Box<Entry>,
+    pub instance: Box<Instance>,
+    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
+    pub surface: Box<vk::SurfaceKHR>,
 }
 
 impl PhysicalDeviceBuildStage {
-    pub fn choose_physical_device(self) -> Result<LogicalDeviceBuildStage, RenderingQueueBuildError>{
+    pub fn choose_physical_device(self)
+        -> Result<LogicalDeviceBuildStage, RenderingQueueBuildError>
+    {
         let devices =  unsafe {
             self.instance
                 .enumerate_physical_devices()
@@ -98,10 +89,10 @@ impl PhysicalDeviceBuildStage {
                     entry: self.entry,
                     messenger: self.messenger,
                     instance: self.instance,
-                    physical_device: device,
+                    physical_device: Box::new(device),
                     surface: self.surface,
-                    queue_families,
-                    swap_chain_support
+                    queue_families: queue_families,
+                    swap_chain_support: Box::new(swap_chain_support)
                 })
             }
         }
@@ -109,7 +100,12 @@ impl PhysicalDeviceBuildStage {
     }
 }
 
-fn check_device_suitable(instance: &Instance, device: &PhysicalDevice, swap_chain_support: &SwapСhainSupport ) ->  Result<(), RenderingQueueBuildError>{
+fn check_device_suitable(
+    instance: &Instance,
+    device: &vk::PhysicalDevice,
+    swap_chain_support: &SwapСhainSupport
+) ->  Result<(), RenderingQueueBuildError>
+{
     unsafe {
         check_physical_device(instance, device)?;
         check_extensions_support(instance, device)?;
@@ -121,7 +117,8 @@ fn check_device_suitable(instance: &Instance, device: &PhysicalDevice, swap_chai
 
 unsafe fn check_swap_chain_support(
     swap_chain_support: &SwapСhainSupport
-) ->  Result<(), RenderingQueueBuildError>{
+) ->  Result<(), RenderingQueueBuildError>
+{
 
     if swap_chain_support.formats.is_empty() || swap_chain_support.present_modes.is_empty(){
         return Result::Err(ErrorMessage("swap chain is not supported"))
@@ -130,7 +127,11 @@ unsafe fn check_swap_chain_support(
     Result::Ok(())
 }
 
-unsafe fn check_physical_device(instance: &Instance, device: &PhysicalDevice)->  Result<(), RenderingQueueBuildError>{
+unsafe fn check_physical_device(
+    instance: &Instance,
+    device: &vk::PhysicalDevice
+)->  Result<(), RenderingQueueBuildError>
+{
     //Имя, тип, поддерживаемая версия вулкан
     let device_properties = instance
         .get_physical_device_properties(device.clone());
@@ -139,18 +140,21 @@ unsafe fn check_physical_device(instance: &Instance, device: &PhysicalDevice)-> 
     let device_features = instance
         .get_physical_device_features(device.clone());
 
-    if device_properties.device_type != PhysicalDeviceType::DISCRETE_GPU {
+    if device_properties.device_type != vk::PhysicalDeviceType::DISCRETE_GPU {
         return Result::Err(ErrorMessage("device is not GPU."));
     }
-    if device_features.geometry_shader != TRUE{
+    if device_features.geometry_shader != vk::TRUE{
         return Result::Err(ErrorMessage("missing geometry shaders support."));
     }
 
     Result::Ok(())
 }
 
-unsafe fn check_extensions_support(instance: &Instance, device: &PhysicalDevice) -> Result<(), RenderingQueueBuildError>{
-
+unsafe fn check_extensions_support(
+    instance: &Instance,
+    device: &vk::PhysicalDevice
+) -> Result<(), RenderingQueueBuildError>
+{
     let extensions = instance
         .enumerate_device_extension_properties(device.clone(), None)
         .map_err(|error|ErrorMessage("сouldn't get extensions"))?;
@@ -169,9 +173,10 @@ unsafe fn check_extensions_support(instance: &Instance, device: &PhysicalDevice)
 }
 
 fn find_queue_index(
-    queue_family_properties: &Vec<QueueFamilyProperties>,
-    flags: QueueFlags
-) -> Option<u32> {
+    queue_family_properties: &Vec<vk::QueueFamilyProperties>,
+    flags: vk::QueueFlags
+) -> Option<u32>
+{
     queue_family_properties
         .iter()
         .position(|propery|
@@ -183,11 +188,12 @@ fn find_queue_index(
 }
 
 fn find_present_queue_index(
-    queue_family_properties: &Vec<QueueFamilyProperties>,
+    queue_family_properties: &Vec<vk::QueueFamilyProperties>,
     instance: &Instance,
-    device: &PhysicalDevice,
-    surface: &SurfaceKHR
-) -> Option<u32> {
+    device: &vk::PhysicalDevice,
+    surface: &vk::SurfaceKHR
+) -> Option<u32>
+{
     let properties_enum = queue_family_properties
         .iter()
         .enumerate();
