@@ -23,7 +23,7 @@ use vulkanalia::vk::{
     ExtDebugUtilsExtension
 };
 
-use crate::rendering::RenderingQueueBuildError::{
+use crate::pipeline_builder::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
 };

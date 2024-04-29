@@ -29,7 +29,7 @@ use vulkanalia::vk::{
     KhrSwapchainExtension
 };
 use winit::dpi::PhysicalSize;
-use crate::rendering::RenderingError::CreatePipeLineError;
+use crate::pipeline_builder::RenderingError::CreatePipeLineError;
 
 use super::shaders::Shader;
 use super::{
@@ -93,7 +93,10 @@ impl RenderingQueue {
 
         let now = std::time::Instant::now();
 
-        let pipeline= pipeline.create_instance(&config.window, config.use_validation_layer)?;
+        let pipeline= pipeline.create_instance(
+            &config.window,
+            config.use_validation_layer
+        )?;
 
         let elapsed = now.elapsed();
         info!("Instance creation duration: {:?}", elapsed);
@@ -105,14 +108,19 @@ impl RenderingQueue {
         info!("Physical device creation duration: {:?}", elapsed);
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.create_logical_device(config.use_validation_layer)?;
+        let pipeline = pipeline.create_logical_device(
+            config.use_validation_layer
+        )?;
 
         let elapsed = now.elapsed();
         info!("Logical device creation duration: {:?}", elapsed);
 
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.create_swap_chain(&config.rendering_resolution, vk::SwapchainKHR::null())?;
+        let pipeline = pipeline.create_swap_chain(
+            &config.rendering_resolution,
+            vk::SwapchainKHR::null()
+        )?;
 
         let elapsed = now.elapsed();
         info!("Swap chain creation duration: {:?}", elapsed);
@@ -126,6 +134,7 @@ impl RenderingQueue {
     fn create_shader_module(
         &self, bytecode: &[u8]
     ) -> Result<vk::ShaderModule, RenderingError>{
+
         let bytecode = Bytecode::new(bytecode)
             .map_err(|err|
                 CreatePipeLineError("Bytecode error"))?;

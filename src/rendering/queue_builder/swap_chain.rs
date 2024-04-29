@@ -13,7 +13,7 @@ use super::{
     initial_builder::EndBuildStage
 };
 use super::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
-use crate::rendering::rendering_queue_config::RenderingResolution;
+use crate::rendering::RenderingResolution;
 
 #[derive(Debug)]
 pub struct SwapChainData{

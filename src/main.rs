@@ -1,12 +1,17 @@
+mod application;
+mod rendering;
+
 use std::env;
 use std::fs::File;
 use log::{debug, info, LevelFilter};
 use application::ApplicationWindow;
-use crate::rendering::{RenderingQueue, RenderingPipelineConfig, RenderingResolution};
 use simple_logger::SimpleLogger;
 
-mod application;
-mod rendering;
+use self::rendering::{
+    RenderingQueue,
+    RenderingPipelineConfig,
+    RenderingResolution
+};
 
 fn main(){
     SimpleLogger::new()
@@ -34,8 +39,6 @@ fn main(){
 
     let elapsed = now.elapsed();
     info!("Queue creation duration: {:?}", elapsed);
-
-    rendering_queue.create_pipeline();
 
     window.run()
         .expect("main loop exception");

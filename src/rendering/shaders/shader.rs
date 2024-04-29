@@ -2,8 +2,8 @@ use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use crate::rendering::RenderingError;
-use crate::rendering::RenderingError::LoadShadersError;
+use crate::pipeline_builder::RenderingError;
+use crate::pipeline_builder::RenderingError::LoadShadersError;
 
 pub struct Shader {
 
