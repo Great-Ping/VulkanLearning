@@ -9,7 +9,7 @@ use vulkanalia::{
 use vulkanalia::vk;
 use vulkanalia::vk::KhrSurfaceExtension;
 
-use crate::pipeline_builder::RenderingQueueBuildError::{
+use crate::rendering::RenderingQueueBuildError::{
     ErrorCode,
     ErrorMessage
 };

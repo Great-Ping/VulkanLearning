@@ -20,8 +20,8 @@ use vulkanalia::vk::{
     DebugUtilsMessengerEXT
 };
 
-use crate::pipeline_builder::RenderingQueueBuildError::ErrorCode;
-use crate::pipeline_builder::RenderingPipelineConfig;
+use super::RenderingQueueBuildError::ErrorCode;
+use crate::rendering::RenderingPipelineConfig;
 
 use super::{
     RenderingQueueBuildError,

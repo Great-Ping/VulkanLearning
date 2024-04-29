@@ -15,7 +15,7 @@ use winit::window::{
 use winit::raw_window_handle::{DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle};
 
 use super::ApplicationError;
-use crate::pipeline_builder::RenderingQueue;
+use crate::rendering::RenderingQueue;
 
 #[derive(Debug)]
 pub struct ApplicationWindow {

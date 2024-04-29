@@ -29,7 +29,7 @@ use vulkanalia::vk::{
     KhrSwapchainExtension
 };
 use winit::dpi::PhysicalSize;
-use crate::pipeline_builder::RenderingError::CreatePipeLineError;
+use crate::rendering::RenderingError::CreatePipeLineError;
 
 use super::shaders::Shader;
 use super::{

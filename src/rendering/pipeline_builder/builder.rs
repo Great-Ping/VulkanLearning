@@ -1,19 +1,18 @@
-use std::arch::x86_64::_mm256_load_pd;
-use std::ffi::{OsStr, OsString};
-use std::hash::DefaultHasher;
+use std::ffi::OsStr;
 use std::path::PathBuf;
+
 use vulkanalia::{Device, vk};
 use vulkanalia::bytecode::Bytecode;
-use vulkanalia::vk::{DeviceV1_0, GraphicsPipelineCreateInfo, HasBuilder, OpticalFlowExecuteFlagsNV, ShaderModule};
+use vulkanalia::vk::{DeviceV1_0, GraphicsPipelineCreateInfo, HasBuilder, ShaderModule};
 
-use crate::rendering::{RenderingError, RenderingQueueBuildError, SwapChainData};
+use crate::rendering::{RenderingQueueBuildError, SwapChainData};
 use crate::rendering::RenderingError::CreatePipeLineError;
 use crate::rendering::RenderingQueueBuildError::ErrorMessage;
 use crate::rendering::shaders::Shader;
 
-struct PipelineBuilder<'device, 'swapchain>{
-    logical_device: &'device Device,
-    swap_chain: &'swapchain SwapChainData,
+struct PipelineBuilder<'b>{
+    logical_device: &'b Device,
+    swap_chain: &'b SwapChainData,
 
     pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo,
     pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo,
@@ -27,9 +26,9 @@ struct PipelineBuilder<'device, 'swapchain>{
     pub vertex_shader_stage: Option<vk::PipelineShaderStageCreateInfo>
 }
 
-impl PipelineBuilder {
+impl<'b> PipelineBuilder<'b> {
 
-    fn default<'device>(logical_device: &Device, swap_chain: &SwapChainData) -> Result<Self, RenderingQueueBuildError> {
+    fn default(logical_device: &'b Device, swap_chain: &'b SwapChainData) -> Result<Self, RenderingQueueBuildError> {
         let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
@@ -107,12 +106,12 @@ impl PipelineBuilder {
             logical_device.create_pipeline_layout(
                 &pipeline_layout_info,
                 None
-            ).map_err(|err| CreatePipeLineError("Create layout error"))?
+            ).map_err(|err| ErrorMessage("Create layout error"))?
         };
 
         Result::Ok(Self {
-            logical_device: logical_device,
-            swap_chain: swap_chain,
+            logical_device,
+            swap_chain,
 
             vertex_input_state,
             input_assembly_state,
@@ -129,10 +128,10 @@ impl PipelineBuilder {
 
     }
 
-    fn set_fragment_shader(mut self, path_to_shader: &PathBuf) -> Result<Self, RenderingQueueBuildError> {
+    fn set_fragment_shader(mut self, path_to_shader: &PathBuf, buffer: &mut Vec<u8>) -> Result<Self, RenderingQueueBuildError> {
         let default_name = OsStr::new("frag_shader");
 
-        let shader = load_shader_module(self.logical_device, path_to_shader)?;
+        let shader = load_shader_module(self.logical_device, path_to_shader, buffer)?;
 
         let shader_name = get_file_name_or_default(path_to_shader, default_name);
         let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
@@ -146,10 +145,10 @@ impl PipelineBuilder {
         Result::Ok(self)
     }
 
-    fn set_vertex_shader(mut self,path_to_shader: &PathBuf) -> Result<Self, RenderingQueueBuildError> {
+    fn set_vertex_shader(mut self,path_to_shader: &PathBuf, buffer: &mut Vec<u8>) -> Result<Self, RenderingQueueBuildError> {
         let default_name = OsStr::new("vertex_shader");
 
-        let shader = load_shader_module(self.logical_device, path_to_shader)?;
+        let shader = load_shader_module(self.logical_device, path_to_shader, buffer)?;
 
         let shader_name = get_file_name_or_default(path_to_shader, default_name);
         let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
@@ -183,7 +182,8 @@ fn load_shader_module(
     path_to_shader: &PathBuf,
     buffer: &mut Vec<u8>
 ) -> Result<ShaderModule, RenderingQueueBuildError> {
-    let file_size = Shader::read_file(&path_to_shader, buffer)?;
+    let file_size = Shader::read_file(&path_to_shader, buffer)
+        .map_err(|err| ErrorMessage("cannot read file"))?;
     let shader_module = create_shader_module(logical_device, &buffer[..file_size])?;
 
     Result::Ok(shader_module)
@@ -194,7 +194,7 @@ fn create_shader_module(
 ) -> Result<vk::ShaderModule, RenderingQueueBuildError> {
     let bytecode = Bytecode::new(bytecode)
         .map_err(|err|
-            CreatePipeLineError("Bytecode error"))?;
+            ErrorMessage("Bytecode error"))?;
 
     let shader_module_info = vk::ShaderModuleCreateInfo::builder()
         .code_size(bytecode.code_size())

@@ -9,7 +9,7 @@ use vulkanalia::{
 };
 use vulkanalia::vk;
 
-use crate::pipeline_builder::{RenderingQueue, RenderingQueueBuildError::ErrorMessage, SwapChainData};
+use crate::rendering::{RenderingQueue, RenderingQueueBuildError::ErrorMessage, SwapChainData};
 
 use super::{
     InstanceBuildStage,
