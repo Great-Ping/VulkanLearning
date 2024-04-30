@@ -5,15 +5,22 @@ use vulkanalia::{
     Instance
 };
 use vulkanalia::vk;
-use vulkanalia::vk::{DeviceV1_0, HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension};
+use vulkanalia::vk::{
+    DeviceV1_0,
+    HasBuilder,
+    KhrSurfaceExtension,
+    KhrSwapchainExtension
+};
 
 use super::{
-    RenderingQueueBuildError,
     QueueFamilyIndices,
     initial_builder::EndBuildStage
 };
-use super::RenderingQueueBuildError::{ErrorCode, ErrorMessage};
-use crate::rendering::RenderingResolution;
+use crate::rendering::{
+    RenderingResolution,
+    RqResult
+};
+use crate::rendering::RenderingError::{CreateSwapChainError, SupportError};
 
 #[derive(Debug)]
 pub struct SwapChainData{
@@ -39,11 +46,11 @@ impl SwapChainBuildStage  {
         self,
         rendering_resolution: &RenderingResolution,
         old_swapchain: vk::SwapchainKHR
-    ) -> Result<EndBuildStage, RenderingQueueBuildError>
+    ) -> RqResult<EndBuildStage>
     {
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
-            .ok_or(ErrorMessage("Choose format error"))?;
+            .ok_or(SupportError("suitable format was not found"))?;
         let present_mode = choose_present_mode(&support.present_modes);
         let extent = choose_swap_chain_extent(rendering_resolution, &support.capabilities);
 
@@ -78,12 +85,12 @@ impl SwapChainBuildStage  {
 
         let swap_chain = unsafe{
             self.logical_device.create_swapchain_khr(&swap_chain_info, None)
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| CreateSwapChainError(err))?
         };
 
         let swap_chain_images = unsafe {
             self.logical_device.get_swapchain_images_khr(swap_chain)
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| CreateSwapChainError(err))?
         };
 
         let swap_chain_image_views = create_swap_chain_image_views(
@@ -125,24 +132,24 @@ impl SwapСhainSupport {
         instance: &Instance,
         surface: &vk::SurfaceKHR,
         physical_device: &vk::PhysicalDevice
-    ) -> Result<Self, RenderingQueueBuildError>
+    ) -> RqResult<Self>
     {
         let capabilities = unsafe {
             instance
                 .get_physical_device_surface_capabilities_khr(physical_device.clone(), surface.clone())
-                .map_err(|err|ErrorCode(err))?
+                .map_err(|err|CreateSwapChainError(err))?
         };
 
         let formats = unsafe {
             instance
                 .get_physical_device_surface_formats_khr(physical_device.clone(), surface.clone())
-                .map_err(|err|ErrorCode(err))?
+                .map_err(|err|CreateSwapChainError(err))?
         };
 
         let present_modes = unsafe {
             instance
                 .get_physical_device_surface_present_modes_khr(physical_device.clone(), surface.clone())
-                .map_err(|err|ErrorCode(err))?
+                .map_err(|err|CreateSwapChainError(err))?
         };
 
         Result::Ok(Self{
@@ -207,7 +214,7 @@ fn create_swap_chain_image_views(
     device: &Device,
     images: &Vec<vk::Image>,
     format: &vk::Format,
-) -> Result<Vec<vk::ImageView>, RenderingQueueBuildError>
+) -> RqResult<Vec<vk::ImageView>>
 {
     let mut image_views = Vec::with_capacity(images.len());
 
@@ -236,7 +243,7 @@ fn create_swap_chain_image_views(
 
         unsafe {
             let image_view = device.create_image_view(&view_info, None)
-                .map_err(|err| ErrorCode(err))?;
+                .map_err(|err| CreateSwapChainError(err))?;
 
             image_views.push(image_view);
         }

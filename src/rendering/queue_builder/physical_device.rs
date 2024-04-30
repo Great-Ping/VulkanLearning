@@ -8,16 +8,12 @@ use vulkanalia::{
 
 use vulkanalia::vk;
 use vulkanalia::vk::KhrSurfaceExtension;
-
-use crate::rendering::RenderingQueueBuildError::{
-    ErrorCode,
-    ErrorMessage
-};
+use crate::rendering::{RenderingError, RqResult};
+use crate::rendering::RenderingError::{ChoosePhysicalDeviceError, SupportError};
 
 use super::{
     SwapСhainSupport,
     REQUIRED_EXTENSIONS,
-    RenderingQueueBuildError,
     LogicalDeviceBuildStage
 };
 
@@ -31,7 +27,7 @@ impl QueueFamilyIndices{
         instance: &Instance,
         device: &vk::PhysicalDevice,
         surface: &vk::SurfaceKHR
-    ) -> Result<QueueFamilyIndices, RenderingQueueBuildError> {
+    ) -> Result<QueueFamilyIndices, RenderingError> {
 
         let queue_properties = unsafe {
             instance
@@ -39,9 +35,9 @@ impl QueueFamilyIndices{
         };
 
         let graphics = find_present_queue_index(&queue_properties, instance, device, surface)
-            .ok_or(ErrorMessage("Present queue family is not supported"))?;
+            .ok_or(SupportError("Present queue family is not supported"))?;
         let present = find_queue_index(&queue_properties, vk::QueueFlags::GRAPHICS)
-            .ok_or(ErrorMessage("Graphics queue family is not supported"))?;
+            .ok_or(SupportError("Graphics queue family is not supported"))?;
 
 
         Result::Ok(Self {
@@ -68,12 +64,12 @@ pub struct PhysicalDeviceBuildStage{
 
 impl PhysicalDeviceBuildStage {
     pub fn choose_physical_device(self)
-        -> Result<LogicalDeviceBuildStage, RenderingQueueBuildError>
+        -> RqResult<LogicalDeviceBuildStage>
     {
         let devices =  unsafe {
             self.instance
                 .enumerate_physical_devices()
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| ChoosePhysicalDeviceError(err))?
         };
 
         for device in devices{
@@ -96,7 +92,7 @@ impl PhysicalDeviceBuildStage {
                 })
             }
         }
-        Result::Err(ErrorMessage("Supported device not found"))
+        Result::Err(SupportError("Supported device not found"))
     }
 }
 
@@ -104,7 +100,7 @@ fn check_device_suitable(
     instance: &Instance,
     device: &vk::PhysicalDevice,
     swap_chain_support: &SwapСhainSupport
-) ->  Result<(), RenderingQueueBuildError>
+) ->  Result<(), RenderingError>
 {
     unsafe {
         check_physical_device(instance, device)?;
@@ -117,11 +113,11 @@ fn check_device_suitable(
 
 unsafe fn check_swap_chain_support(
     swap_chain_support: &SwapСhainSupport
-) ->  Result<(), RenderingQueueBuildError>
+) ->  RqResult<()>
 {
 
     if swap_chain_support.formats.is_empty() || swap_chain_support.present_modes.is_empty(){
-        return Result::Err(ErrorMessage("swap chain is not supported"))
+        return Result::Err(SupportError("swap chain is not supported"))
     }
 
     Result::Ok(())
@@ -130,7 +126,7 @@ unsafe fn check_swap_chain_support(
 unsafe fn check_physical_device(
     instance: &Instance,
     device: &vk::PhysicalDevice
-)->  Result<(), RenderingQueueBuildError>
+)->  RqResult<()>
 {
     //Имя, тип, поддерживаемая версия вулкан
     let device_properties = instance
@@ -141,10 +137,10 @@ unsafe fn check_physical_device(
         .get_physical_device_features(device.clone());
 
     if device_properties.device_type != vk::PhysicalDeviceType::DISCRETE_GPU {
-        return Result::Err(ErrorMessage("device is not GPU."));
+        return Result::Err(SupportError("device is not GPU."));
     }
     if device_features.geometry_shader != vk::TRUE{
-        return Result::Err(ErrorMessage("missing geometry shaders support."));
+        return Result::Err(SupportError("missing geometry shaders support."));
     }
 
     Result::Ok(())
@@ -153,11 +149,11 @@ unsafe fn check_physical_device(
 unsafe fn check_extensions_support(
     instance: &Instance,
     device: &vk::PhysicalDevice
-) -> Result<(), RenderingQueueBuildError>
+) -> RqResult<()>
 {
     let extensions = instance
         .enumerate_device_extension_properties(device.clone(), None)
-        .map_err(|error|ErrorMessage("сouldn't get extensions"))?;
+        .map_err(|error|SupportError("сouldn't get extensions"))?;
 
     let extensions = extensions
         .iter()
@@ -168,7 +164,7 @@ unsafe fn check_extensions_support(
         Result::Ok(())
     }
     else {
-        Result::Err(ErrorMessage("missing required device extensions"))
+        Result::Err(SupportError("missing required device extensions"))
     }
 }
 

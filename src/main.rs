@@ -13,6 +13,7 @@ use self::rendering::{
     RenderingResolution
 };
 
+
 fn main(){
     SimpleLogger::new()
         .with_colors(true)

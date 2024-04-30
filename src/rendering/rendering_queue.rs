@@ -29,17 +29,9 @@ use vulkanalia::vk::{
     KhrSwapchainExtension
 };
 use winit::dpi::PhysicalSize;
-use crate::rendering::RenderingError::CreatePipeLineError;
 
 use super::shaders::Shader;
-use super::{
-    RenderingPipelineConfig,
-    RenderingQueueBuildError,
-    QueueFamilyIndices,
-    RenderingError,
-    SwapChainData,
-    get_debug_info
-};
+use super::{RenderingPipelineConfig, QueueFamilyIndices, RenderingError, SwapChainData, get_debug_info, RqResult};
 
 #[derive(Debug)]
 pub struct RenderingQueue {
@@ -80,12 +72,12 @@ impl RenderingQueue {
 
     pub fn create<TWindow>(
         config: &RenderingPipelineConfig<&TWindow>
-    ) -> Result<RenderingQueue, RenderingQueueBuildError>
+    ) -> RqResult<RenderingQueue>
     where TWindow: HasWindowHandle+HasDisplayHandle
     {
         let now = std::time::Instant::now();
 
-        let pipeline = Self::builder()
+        let rendering_queue = Self::builder()
             .create_entry()?;
 
         let elapsed = now.elapsed();
@@ -93,7 +85,7 @@ impl RenderingQueue {
 
         let now = std::time::Instant::now();
 
-        let pipeline= pipeline.create_instance(
+        let rendering_queue= rendering_queue.create_instance(
             &config.window,
             config.use_validation_layer
         )?;
@@ -102,13 +94,13 @@ impl RenderingQueue {
         info!("Instance creation duration: {:?}", elapsed);
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.choose_physical_device()?;
+        let rendering_queue = rendering_queue.choose_physical_device()?;
 
         let elapsed = now.elapsed();
         info!("Physical device creation duration: {:?}", elapsed);
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.create_logical_device(
+        let rendering_queue = rendering_queue.create_logical_device(
             config.use_validation_layer
         )?;
 
@@ -117,7 +109,7 @@ impl RenderingQueue {
 
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.create_swap_chain(
+        let rendering_queue = rendering_queue.create_swap_chain(
             &config.rendering_resolution,
             vk::SwapchainKHR::null()
         )?;
@@ -126,9 +118,9 @@ impl RenderingQueue {
         info!("Swap chain creation duration: {:?}", elapsed);
 
         let now = std::time::Instant::now();
-        let pipeline = pipeline.build();
+        let rendering_queue = rendering_queue.build();
 
-        Result::Ok(pipeline)
+        Result::Ok(rendering_queue)
     }
 }
 

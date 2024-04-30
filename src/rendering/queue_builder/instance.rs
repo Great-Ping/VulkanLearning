@@ -22,16 +22,15 @@ use vulkanalia::vk::{
     make_version,
     ExtDebugUtilsExtension
 };
-
-use crate::rendering::RenderingQueueBuildError::{
-    ErrorCode,
-    ErrorMessage
+use crate::rendering::{RenderingError, RqResult};
+use crate::rendering::RenderingError::{
+    CreateInstanceError,
+    SupportError
 };
 
 use super::{
     get_debug_info,
     PhysicalDeviceBuildStage,
-    RenderingQueueBuildError,
     VALIDATION_LAYER};
 
 pub struct InstanceBuildStage {
@@ -43,7 +42,7 @@ impl InstanceBuildStage {
         self,
         window: &TWindow,
         use_validation_layer: bool
-    ) -> Result<PhysicalDeviceBuildStage, RenderingQueueBuildError>
+    ) -> RqResult<PhysicalDeviceBuildStage>
     where TWindow: HasDisplayHandle + HasWindowHandle {
 
         let application_info = ApplicationInfo::builder()
@@ -76,13 +75,13 @@ impl InstanceBuildStage {
         let instance_info = instance_info.build();
         let instance = unsafe {
             self.entry.create_instance(&instance_info, None)
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| CreateInstanceError(err))?
         };
 
         let messenger = if use_validation_layer {
             let messenger = unsafe {
                 instance.create_debug_utils_messenger_ext(&debug_info, None)
-                    .map_err(|err| ErrorCode(err))?
+                    .map_err(|err| CreateInstanceError(err))?
             };
             Some(Box::new(messenger))
         } else {
@@ -91,7 +90,7 @@ impl InstanceBuildStage {
 
         let window_surface = unsafe {
             create_surface(&instance, window, window)
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| CreateInstanceError(err))?
         };
 
         Result::Ok(PhysicalDeviceBuildStage {
@@ -124,10 +123,10 @@ where TWindow: HasWindowHandle {
 unsafe fn get_layers(
     entry: &Entry,
     use_validation_layer: bool
-) -> Result<Vec<*const c_char>, RenderingQueueBuildError> {
+) -> RqResult<Vec<*const c_char>> {
     let layers = entry
         .enumerate_instance_layer_properties()
-        .map_err(|err| ErrorCode(err))?;
+        .map_err(|err| CreateInstanceError(err))?;
 
     let available_layers = layers
         .iter()
@@ -139,7 +138,7 @@ unsafe fn get_layers(
     } else if available_layers.contains(&VALIDATION_LAYER) {
         Result::Ok(vec![VALIDATION_LAYER.as_ptr()])
     } else {
-        Result::Err(ErrorMessage("Required layers is not supported"))
+        Result::Err(SupportError("Required layers is not supported"))
     }
 }
 

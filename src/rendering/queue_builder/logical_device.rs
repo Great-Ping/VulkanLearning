@@ -19,12 +19,10 @@ use vulkanalia::vk::{
     PhysicalDevice,
     DebugUtilsMessengerEXT
 };
-
-use super::RenderingQueueBuildError::ErrorCode;
-use crate::rendering::RenderingPipelineConfig;
+use crate::rendering::{RenderingError, RqResult};
+use crate::rendering::RenderingError::CreateLogicalDeviceError;
 
 use super::{
-    RenderingQueueBuildError,
     QueueFamilyIndices,
     SwapChainBuildStage,
     SwapСhainSupport,
@@ -44,7 +42,10 @@ pub struct LogicalDeviceBuildStage {
 }
 
 impl LogicalDeviceBuildStage {
-    pub fn create_logical_device(self, use_validation_layer: bool) -> Result<SwapChainBuildStage, RenderingQueueBuildError>{
+    pub fn create_logical_device(
+        self,
+        use_validation_layer: bool
+    ) -> RqResult<SwapChainBuildStage>{
         let queue_infos = unsafe {
             create_queue_infos(
                 &self.queue_families
@@ -65,7 +66,7 @@ impl LogicalDeviceBuildStage {
 
         let logical_device = unsafe {
             self.instance.create_device(*self.physical_device, &device_info, None)
-                .map_err(|err| ErrorCode(err))?
+                .map_err(|err| CreateLogicalDeviceError(err))?
         };
 
         Result::Ok(SwapChainBuildStage {

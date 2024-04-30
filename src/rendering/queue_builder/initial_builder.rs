@@ -1,20 +1,27 @@
-use vulkanalia::loader::{
-    LibloadingLoader,
-    LIBRARY
-};
 use vulkanalia::{
     Device,
     Entry,
     Instance
 };
+use vulkanalia::loader::{
+    LibloadingLoader,
+    LIBRARY
+};
 use vulkanalia::vk;
 
-use crate::rendering::{RenderingQueue, RenderingQueueBuildError::ErrorMessage, SwapChainData};
+use crate::rendering::{
+    RenderingQueue,
+    RqResult
+};
+use crate::rendering::RenderingError::{
+    CreateEntryError,
+    LoadLibraryError
+};
 
 use super::{
     InstanceBuildStage,
-    RenderingQueueBuildError,
-    QueueFamilyIndices
+    QueueFamilyIndices,
+    SwapChainData
 };
 
 pub struct RenderingQueueBuilder;
@@ -25,13 +32,13 @@ impl RenderingQueueBuilder {
         Self
     }
 
-    pub fn create_entry(self) -> Result<InstanceBuildStage, RenderingQueueBuildError>{
+    pub fn create_entry(self) -> RqResult<InstanceBuildStage>{
         let entry = unsafe {
             let loader = LibloadingLoader::new(LIBRARY)
-                .map_err(|err| ErrorMessage("Load library error"))?;
+                .map_err(|err| LoadLibraryError(err))?;
 
             Entry::new(loader)
-                .map_err(|_| ErrorMessage("Entry create error"))?
+                .map_err(|err| CreateEntryError(err))?
         };
 
         Result::Ok( InstanceBuildStage {
