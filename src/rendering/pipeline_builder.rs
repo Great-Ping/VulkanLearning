@@ -1,18 +1,14 @@
-use std::ffi::OsStr;
-use std::path::PathBuf;
-
 use vulkanalia::{Device, vk};
-use vulkanalia::bytecode::Bytecode;
-use vulkanalia::vk::{DeviceV1_0, GraphicsPipelineCreateInfo, HasBuilder, ShaderModule};
+use vulkanalia::vk::{AttachmentDescription, AttachmentLoadOp, AttachmentReference, AttachmentStoreOp, DeviceV1_0, GraphicsPipelineCreateInfo, HasBuilder, RenderPassBeginInfo, RenderPassCreateInfo};
 
-use super::{RenderingError, SwapChainData};
-use super::RenderingError::CreatePipelineError;
+use super::{LogicalDeviceBuildStage, pipeline_builder, RqResult, SwapChainData};
 use super::shaders::Shader;
 
-struct PipelineBuilder<'b>{
-    logical_device: &'b Device,
-    swap_chain: &'b SwapChainData,
+struct Pipeline{
+    layout:
+}
 
+struct PipelineBuilder{
     pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo,
     pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo,
     pub viewport: vk::Viewport,
@@ -20,13 +16,14 @@ struct PipelineBuilder<'b>{
     pub multisample_state: vk::PipelineMultisampleStateCreateInfo,
     pub color_blend_state: vk::PipelineColorBlendStateCreateInfo,
     pub dynamic_state: vk::PipelineDynamicStateCreateInfo,
-    pub pipeline_layout: vk::PipelineLayout,
+    pub pipeline_layout: vk::PipelineLayoutCreateInfo,
+    pub render_pass: RenderPassCreateInfo,
     pub fragment_shader_stage: Option<vk::PipelineShaderStageCreateInfo>,
     pub vertex_shader_stage: Option<vk::PipelineShaderStageCreateInfo>
 }
 
-impl<'b> PipelineBuilder<'b> {
-    fn default(logical_device: &'b Device, swap_chain: &'b SwapChainData) -> Result<Self, RenderingError> {
+impl PipelineBuilder {
+    fn default(swap_chain: &SwapChainData) -> Self {
         let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
@@ -100,17 +97,11 @@ impl<'b> PipelineBuilder<'b> {
 
         let pipeline_layout_info = vk::PipelineLayoutCreateInfo::default();
 
-        let pipeline_layout = unsafe {
-            logical_device.create_pipeline_layout(
-                &pipeline_layout_info,
-                None
-            ).map_err(|err| CreatePipelineError(err))?
-        };
 
-        Result::Ok(Self {
-            logical_device,
-            swap_chain,
+        //Далее идет создание проходов рендеринга
+        let render_pass = default_render_pass_create_info(swap_chain);
 
+        return Self {
             vertex_input_state,
             input_assembly_state,
             viewport,
@@ -119,90 +110,96 @@ impl<'b> PipelineBuilder<'b> {
             color_blend_state,
             dynamic_state,
             pipeline_layout,
+            render_pass,
 
             fragment_shader_stage: Option::None,
             vertex_shader_stage: Option::None
-        })
-
+        };
     }
 
-    fn set_fragment_shader(mut self, path_to_shader: &PathBuf, buffer: &mut Vec<u8>) -> Result<Self, RenderingError> {
-        let default_name = OsStr::new("frag_shader");
-
-        let shader = load_shader_module(self.logical_device, path_to_shader, buffer)?;
-
-        let shader_name = get_file_name_or_default(path_to_shader, default_name);
+    pub fn set_fragment_shader(
+        mut self,
+        shader: &Shader
+    ) -> Self {
         let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::FRAGMENT)
-            .module(shader)
-            .name(shader_name)
+            .module(shader.module.clone())
+            .name(&shader.name)
             .build();
 
         self.fragment_shader_stage = Option::Some(shader_stage);
 
-        Result::Ok(self)
+        return self;
     }
 
-    fn set_vertex_shader(mut self,path_to_shader: &PathBuf, buffer: &mut Vec<u8>) -> Result<Self, RenderingError> {
-        let default_name = OsStr::new("vertex_shader");
-
-        let shader = load_shader_module(self.logical_device, path_to_shader, buffer)?;
-
-        let shader_name = get_file_name_or_default(path_to_shader, default_name);
+    pub fn set_vertex_shader(
+        mut self,
+        shader: &Shader
+    ) -> Self {
         let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
-            .stage(vk::ShaderStageFlags::VERTEX)
-            .module(shader)
-            .name(shader_name)
+            .stage(vk::ShaderStageFlags::FRAGMENT)
+            .module(shader.module.clone())
+            .name(&shader.name)
             .build();
 
         self.vertex_shader_stage = Option::Some(shader_stage);
 
-        Result::Ok(self)
+        return self;
     }
 
-    fn build() -> Result<GraphicsPipelineCreateInfo, RenderingError> {
-        todo!()
+    fn build(
+        self,
+        logical_device: &Device
+    ) -> RqResult<Pipeline> {
+        let pipeline_layout = unsafe {
+            logical_device.create_pipeline_layout(&self.pipeline_layout, None)?
+        };
+
+        let render_pass = unsafe {
+            logical_device.create_render_pass(&self.render_pass, None)?
+        };
     }
 }
-fn get_file_name_or_default<'b>(
-    path_to_shader: &'b PathBuf,
-    default: &'b OsStr
-) -> &'b [u8]
-{
-    let shader_file_name = path_to_shader.file_name()
-        .map_or(default, | value | value);
 
-    return shader_file_name.as_encoded_bytes()
-}
-
-fn load_shader_module(
-    logical_device: &Device,
-    path_to_shader: &PathBuf,
-    buffer: &mut Vec<u8>
-) -> Result<ShaderModule, RenderingError> {
-    let file_size = Shader::read_file(&path_to_shader, buffer)
-        .map_err(|err| ErrorMessage("cannot read file"))?;
-    let shader_module = create_shader_module(logical_device, &buffer[..file_size])?;
-
-    Result::Ok(shader_module)
-}
-
-fn create_shader_module(
-    logical_device: &Device, bytecode: &[u8]
-) -> Result<vk::ShaderModule, RenderingError> {
-    let bytecode = Bytecode::new(bytecode)
-        .map_err(|err|
-            ErrorMessage("Bytecode error"))?;
-
-    let shader_module_info = vk::ShaderModuleCreateInfo::builder()
-        .code_size(bytecode.code_size())
-        .code(bytecode.code())
+fn default_render_pass_create_info(
+    swap_chain: &SwapChainData
+) -> vk::RenderPassCreateInfo {
+    let color_attachment = vk::AttachmentDescription::builder()
+        .format(swap_chain.format)
+        .samples(vk::SampleCountFlags::_1)
+        //Определяем что делать с данными до рендеринга и после
+        //Применяется к данным о цвете и глубине
+        .load_op(vk::AttachmentLoadOp::CLEAR) //Отчистка фрейм буфера
+        .store_op(vk::AttachmentStoreOp::STORE) // Сохраняем в памяти
+        //Применяются к данным трафарета
+        .stencil_load_op(AttachmentLoadOp::DONT_CARE)
+        .stencil_store_op(AttachmentStoreOp::DONT_CARE)
+        //Макет изоражения до начала этапа рендеринга
+        .initial_layout(vk::ImageLayout::UNDEFINED)
+        //После
+        .final_layout(vk::ImageLayout::PRESENT_SRC_KHR) // Изображения для SwapChain
         .build();
 
-    let shader_module = unsafe {
-        logical_device.create_shader_module(&shader_module_info, None)
-            .map_err(|err| ErrorMessage("create shaders module error"))?
-    };
+    let color_attachments = &[color_attachment];
 
-    Result::Ok(shader_module)
+    let color_attachment_ref = vk::AttachmentReference::builder()
+        .attachment(0) //Индекс в массиве attachments (у нас 1 элемент тот что выше)
+        .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
+        .build();
+
+    let color_attachment_refs = &[color_attachment_ref];
+
+    //Подпас графического типа
+    let subpass = vk::SubpassDescription::builder()
+        .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
+        .color_attachments(color_attachment_refs);
+
+    let subpasses = &[subpass];
+
+    let rendere_pass = vk::RenderPassCreateInfo::builder()
+        .attachments(color_attachments)
+        .subpasses(subpasses)
+        .build();
+
+    return rendere_pass;
 }

@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use libloading::Error;
 use vulkanalia::loader::LoaderError;
 use vulkanalia::vk::{ErrorCode};
@@ -16,8 +17,5 @@ pub enum RenderingError {
     ChoosePhysicalDeviceError(ErrorCode),
     CreateSwapChainError(ErrorCode),
     CreatePipelineError(ErrorCode),
-    LoadShadersError {
-        path_to_shader:String,
-        error: std::io::Error
-    }
+    LoadShadersError(String)
 }

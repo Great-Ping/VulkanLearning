@@ -5,12 +5,7 @@ use vulkanalia::{
     Instance
 };
 use vulkanalia::vk;
-use vulkanalia::vk::{
-    DeviceV1_0,
-    HasBuilder,
-    KhrSurfaceExtension,
-    KhrSwapchainExtension
-};
+use vulkanalia::vk::{DeviceV1_0, HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension, SurfaceFormatKHR};
 
 use super::{
     QueueFamilyIndices,
@@ -27,7 +22,8 @@ pub struct SwapChainData{
     pub swap_chain: vk::SwapchainKHR,
     pub extent: vk::Extent2D,
     pub images: Vec<vk::Image>,
-    pub image_views: Vec<vk::ImageView>
+    pub image_views: Vec<vk::ImageView>,
+    pub format: vk::Format
 }
 
 pub struct SwapChainBuildStage {
@@ -104,6 +100,7 @@ impl SwapChainBuildStage  {
             extent,
             images: swap_chain_images,
             image_views: swap_chain_image_views,
+            format: format.format
         };
 
         return Result::Ok(EndBuildStage {

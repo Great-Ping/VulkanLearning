@@ -5,7 +5,7 @@ use crate::rendering::RenderingError;
 pub enum ApplicationError{
     EventLoopError(EventLoopError),
     WindowError(OsError),
-    RenderingQueueError(RenderingError)
+    RenderingError(RenderingError)
 }
 
 impl From<EventLoopError> for ApplicationError {
@@ -16,7 +16,7 @@ impl From<EventLoopError> for ApplicationError {
 
 impl From<RenderingError> for ApplicationError {
     fn from(error: RenderingError) -> Self {
-        ApplicationError::RenderingQueueError(error)
+        ApplicationError::RenderingError(error)
     }
 }
 
