@@ -1,17 +1,14 @@
 use vulkanalia::{Device, vk};
-use vulkanalia::vk::{AttachmentDescription, AttachmentLoadOp, AttachmentReference, AttachmentStoreOp, DeviceV1_0, GraphicsPipelineCreateInfo, HasBuilder, RenderPassBeginInfo, RenderPassCreateInfo};
+use vulkanalia::vk::{AttachmentLoadOp, AttachmentStoreOp, DeviceV1_0, Handle, HasBuilder, RenderPassCreateInfo};
+use crate::rendering::RenderingError::{CreatePipelineLayoutError, CreateRenderPassError};
 
-use super::{LogicalDeviceBuildStage, pipeline_builder, RqResult, SwapChainData};
+use super::{RqResult, SwapChainData};
 use super::shaders::Shader;
-
-struct Pipeline{
-    layout:
-}
 
 struct PipelineBuilder{
     pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo,
     pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo,
-    pub viewport: vk::Viewport,
+    pub viewport_state: vk::PipelineViewportStateCreateInfo,
     pub rasterization_state: vk::PipelineRasterizationStateCreateInfo,
     pub multisample_state: vk::PipelineMultisampleStateCreateInfo,
     pub color_blend_state: vk::PipelineColorBlendStateCreateInfo,
@@ -38,6 +35,17 @@ impl PipelineBuilder {
             .height(swap_chain.extent.height as f32)
             .min_depth(0.0)
             .max_depth(1.0)
+            .build();
+
+        let scissor = vk::Rect2D::builder()
+            .offset(vk::Offset2D { x: 0, y: 0 })
+            .extent(swap_chain.extent);
+
+        let viewports = &[viewport];
+        let scissors = &[scissor];
+        let viewport_state = vk::PipelineViewportStateCreateInfo::builder()
+            .viewports(viewports)
+            .scissors(scissors)
             .build();
 
         let rasterization_state = vk::PipelineRasterizationStateCreateInfo::builder()
@@ -95,7 +103,7 @@ impl PipelineBuilder {
             .dynamic_states(dynamic_states)
             .build();
 
-        let pipeline_layout_info = vk::PipelineLayoutCreateInfo::default();
+        let pipeline_layout = vk::PipelineLayoutCreateInfo::default();
 
 
         //Далее идет создание проходов рендеринга
@@ -104,7 +112,7 @@ impl PipelineBuilder {
         return Self {
             vertex_input_state,
             input_assembly_state,
-            viewport,
+            viewport_state,
             rasterization_state,
             multisample_state,
             color_blend_state,
@@ -147,17 +155,52 @@ impl PipelineBuilder {
         return self;
     }
 
+
+    fn get_stages(&self) -> Vec<vk::PipelineShaderStageCreateInfo>{
+        let mut stages = Vec::with_capacity(2);
+
+        if let Some(stage) = self.vertex_shader_stage {
+            stages.push(stage);
+        }
+
+        if let Some(stage) = self.fragment_shader_stage{
+            stages.push(stage);
+        }
+        return stages;
+    }
+
+
     fn build(
         self,
         logical_device: &Device
-    ) -> RqResult<Pipeline> {
+    ) -> RqResult<vk::GraphicsPipelineCreateInfo> {
         let pipeline_layout = unsafe {
-            logical_device.create_pipeline_layout(&self.pipeline_layout, None)?
+            logical_device.create_pipeline_layout(&self.pipeline_layout, None)
+                .map_err(|err| CreatePipelineLayoutError(err))?
         };
 
         let render_pass = unsafe {
-            logical_device.create_render_pass(&self.render_pass, None)?
+            logical_device.create_render_pass(&self.render_pass, None)
+                .map_err(|err|CreateRenderPassError(err))?
         };
+
+        let pipline_stages = self.get_stages();
+        let grahics_pipeline = vk::GraphicsPipelineCreateInfo::builder()
+            .stages(pipline_stages.as_ref())
+            .vertex_input_state(&self.vertex_input_state)
+            .input_assembly_state(&self.input_assembly_state)
+            .viewport_state(&self.viewport_state)
+            .rasterization_state(&self.rasterization_state)
+            .multisample_state(&self.multisample_state)
+            .color_blend_state(&self.color_blend_state)
+            .layout(pipeline_layout)
+            .render_pass(render_pass)
+            .subpass(0)
+            .base_pipeline_handle(vk::Pipeline::null())
+            .base_pipeline_index(-1)
+            .build();
+
+        Result::Ok(grahics_pipeline)
     }
 }
 
@@ -196,10 +239,10 @@ fn default_render_pass_create_info(
 
     let subpasses = &[subpass];
 
-    let rendere_pass = vk::RenderPassCreateInfo::builder()
+    let render_pass = vk::RenderPassCreateInfo::builder()
         .attachments(color_attachments)
         .subpasses(subpasses)
         .build();
 
-    return rendere_pass;
+    return render_pass;
 }

@@ -17,5 +17,8 @@ pub enum RenderingError {
     ChoosePhysicalDeviceError(ErrorCode),
     CreateSwapChainError(ErrorCode),
     CreatePipelineError(ErrorCode),
-    LoadShadersError(String)
+    LoadShadersError(String),
+
+    CreatePipelineLayoutError(ErrorCode),
+    CreateRenderPassError(ErrorCode),
 }
