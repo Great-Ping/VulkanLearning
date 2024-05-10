@@ -5,16 +5,18 @@ use vulkanalia::{
     Instance
 };
 use vulkanalia::vk;
-use vulkanalia::vk::{DeviceV1_0, HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension, SurfaceFormatKHR};
+use vulkanalia::vk::{
+    DeviceV1_0,
+    HasBuilder,
+    KhrSurfaceExtension,
+    KhrSwapchainExtension
+};
 
 use super::{
     QueueFamilyIndices,
-    initial_builder::EndBuildStage
+    PipelineAddingStage
 };
-use crate::rendering::{
-    RenderingResolution,
-    RqResult
-};
+use crate::rendering::{RenderingResolution, RenderPassBuildStage, RqResult};
 use crate::rendering::RenderingError::{CreateSwapChainError, SupportError};
 
 #[derive(Debug)]
@@ -42,7 +44,7 @@ impl SwapChainBuildStage  {
         self,
         rendering_resolution: &RenderingResolution,
         old_swapchain: vk::SwapchainKHR
-    ) -> RqResult<EndBuildStage>
+    ) -> RqResult<RenderPassBuildStage>
     {
         let support = &self.swap_chain_support;
         let format = choose_swap_chain_surface_format(&support.formats)
@@ -103,7 +105,7 @@ impl SwapChainBuildStage  {
             format: format.format
         };
 
-        return Result::Ok(EndBuildStage {
+        return Result::Ok(RenderPassBuildStage {
             entry: self.entry,
             instance: self.instance,
             messenger: self.messenger,
@@ -111,7 +113,7 @@ impl SwapChainBuildStage  {
             logical_device: self.logical_device,
             queue_families: self.queue_families,
             surface: self.surface,
-            swap_chain: Box::new(swap_chain_data)
+            swap_chain: Box::new(swap_chain_data),
         });
     }
 }

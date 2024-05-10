@@ -19,6 +19,7 @@ pub enum RenderingError {
     CreatePipelineError(ErrorCode),
     LoadShadersError(String),
 
-    CreatePipelineLayoutError(ErrorCode),
     CreateRenderPassError(ErrorCode),
+    CreatePipelineLayoutError(ErrorCode),
+    CreateFrameBufferError(ErrorCode),
 }
