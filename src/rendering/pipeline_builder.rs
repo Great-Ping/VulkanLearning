@@ -5,7 +5,7 @@ use crate::rendering::RenderingError::{CreatePipelineLayoutError, CreateRenderPa
 use super::{RqResult, SwapChainData};
 use super::shaders::Shader;
 
-struct PipelineBuilder{
+pub struct PipelineBuilder{
     pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo,
     pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo,
     pub viewport_state: vk::PipelineViewportStateCreateInfo,
@@ -20,7 +20,7 @@ struct PipelineBuilder{
 }
 
 impl PipelineBuilder {
-    fn default(swap_chain: &SwapChainData) -> Self {
+    pub fn default(swap_chain: &SwapChainData) -> Self {
         let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
@@ -170,7 +170,7 @@ impl PipelineBuilder {
     }
 
 
-    fn build(
+    pub fn build(
         self,
         logical_device: &Device
     ) -> RqResult<vk::GraphicsPipelineCreateInfo> {

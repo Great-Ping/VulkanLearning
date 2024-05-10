@@ -10,3 +10,5 @@ mod logical_device;
 mod validation_layer;
 mod swap_chain;
 mod initial_builder;
+mod adding_pipelines;
+mod framebuffer;
