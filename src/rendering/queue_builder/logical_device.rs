@@ -45,7 +45,7 @@ impl LogicalDeviceBuildStage {
     pub fn create_logical_device(
         self,
         use_validation_layer: bool
-    ) -> RqResult<SwapChainBuildStage>{
+    ) -> RqResult<SwapChainBuildStage> {
         let queue_infos = unsafe {
             create_queue_infos(
                 &self.queue_families

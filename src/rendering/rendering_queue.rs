@@ -24,7 +24,7 @@ use winit::dpi::PhysicalSize;
 use crate::rendering::RenderingError::{LoadShadersError, SupportError};
 
 use super::shaders::Shader;
-use super::{RenderingPipelineConfig, QueueFamilyIndices, RenderingError, SwapChainData, get_debug_info, RqResult, PipelineBuilder};
+use super::{RenderingPipelineConfig, QueueFamilyIndices, RenderingError, SwapChainData, get_debug_info, RqResult};
 
 #[derive(Debug)]
 pub struct RenderingQueue {
@@ -63,83 +63,44 @@ impl RenderingQueue {
         }
     }
 
+
     pub fn create<TWindow>(
         config: &RenderingPipelineConfig<&TWindow>
     ) -> RqResult<RenderingQueue>
     where TWindow: HasWindowHandle+HasDisplayHandle
     {
-        let now = std::time::Instant::now();
 
         let rendering_queue = Self::builder()
-            .create_entry()?;
-
-        let elapsed = now.elapsed();
-        info!("Entry creation duration: {:?}", elapsed);
-
-        let now = std::time::Instant::now();
-
-        let rendering_queue= rendering_queue.create_instance(
-            &config.window,
-            config.use_validation_layer
-        )?;
-
-        let elapsed = now.elapsed();
-        info!("Instance creation duration: {:?}", elapsed);
-
-        let now = std::time::Instant::now();
-        let rendering_queue = rendering_queue.choose_physical_device()?;
-
-        let elapsed = now.elapsed();
-        info!("Physical device creation duration: {:?}", elapsed);
-
-        let now = std::time::Instant::now();
-        let rendering_queue = rendering_queue.create_logical_device(
-            config.use_validation_layer
-        )?;
-
-        let elapsed = now.elapsed();
-        info!("Logical device creation duration: {:?}", elapsed);
-
-
-        let now = std::time::Instant::now();
-        let swap_chain = rendering_queue.create_swap_chain(
-            &config.rendering_resolution,
-            vk::SwapchainKHR::null()
-        )?;
-
-        let elapsed = now.elapsed();
-        info!("Swap chain creation duration: {:?}", elapsed);
-
-        let now = std::time::Instant::now();
-        let render_pass = swap_chain.create_render_pass()?;
-
-        let elapsed = now.elapsed();
-        info!("Render pass creation duration: {:?}", elapsed);
+            .create_entry()?
+            .create_instance(
+                &config.window,
+                config.use_validation_layer
+            )?
+            .choose_physical_device()?
+            .create_logical_device(
+                config.use_validation_layer
+            )?
+            .create_swap_chain(
+                &config.rendering_resolution,
+                vk::SwapchainKHR::null()
+            )?
+            .create_render_pass()?;
 
         let mut path_to = env::current_exe()
             .map_err(|err|LoadShadersError(String::from("Unable to get the path")))?;
         path_to.pop();
-        path_to.push("assets");
-        path_to.push("shaders");
+        path_to.push("assets/shaders");
         path_to.push("Example.frag.spv");
         let mut buffer = Vec::with_capacity(4096);
-        let fragShader = Shader::read_file(&path_to, &render_pass.logical_device, &mut buffer)?;
+        let fragShader = Shader::read_file(&path_to, &rendering_queue.logical_device, &mut buffer)?;
         path_to.pop();
         path_to.push("Example.vert.spv");
-        let vertShader = Shader::read_file(&path_to, &render_pass.logical_device, &mut buffer)?;
-        let now = std::time::Instant::now();
-        let pipelines = render_pass
+        let vertShader = Shader::read_file(&path_to, &rendering_queue.logical_device, &mut buffer)?;
+
+        let renedering_queue = rendering_queue
             .add_pipeline(&vertShader, &fragShader)?
-            .build_pipelines()?;
-
-        let elapsed = now.elapsed();
-        info!("pipelines creation duration: {:?}", elapsed);
-
-
-        let now = std::time::Instant::now();
-        let framebuffer = pipelines.create_framebuffers();
-        let elapsed = now.elapsed();
-        info!("Framebuffer creation duration: {:?}", elapsed);
+            .build_pipelines()?
+            .create_framebuffers();
 
         Result::Err(SupportError("Not implemented"))
     }

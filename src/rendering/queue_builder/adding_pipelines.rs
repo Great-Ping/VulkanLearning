@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use vulkanalia::{Device, Entry, Instance, vk};
 use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder};
-use crate::rendering::{FramebuffersBuildStage, PipelineBuilder, QueueFamilyIndices, RqResult, SwapChainData};
+use crate::rendering::{FramebuffersBuildStage, QueueFamilyIndices, RqResult, SwapChainData};
 use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError};
 use crate::rendering::shaders::Shader;
 
@@ -24,9 +24,7 @@ impl PipelineAddingStage{
         mut self,
         vertex_shader: &Shader,
         fragment_shader: &Shader,
-    ) -> RqResult<Self>
-    {
-
+    ) -> RqResult<Self> {
         let vertex_shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::VERTEX)
             .module(vertex_shader.module.clone())
