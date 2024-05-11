@@ -7,7 +7,7 @@ use vulkanalia::{
 };
 
 use vulkanalia::vk;
-use vulkanalia::vk::KhrSurfaceExtension;
+use vulkanalia::vk::{KhrSurfaceExtension, PhysicalDeviceType};
 use crate::rendering::{RenderingError, RqResult};
 use crate::rendering::RenderingError::{ChoosePhysicalDeviceError, SupportError};
 
@@ -39,7 +39,6 @@ impl QueueFamilyIndices{
         let present = find_queue_index(&queue_properties, vk::QueueFlags::GRAPHICS)
             .ok_or(SupportError("Graphics queue family is not supported"))?;
 
-
         Result::Ok(Self {
             graphics,
             present
@@ -63,8 +62,10 @@ pub struct PhysicalDeviceBuildStage{
 }
 
 impl PhysicalDeviceBuildStage {
-    pub fn choose_physical_device(self)
-        -> RqResult<LogicalDeviceBuildStage>
+    pub fn choose_physical_device(
+        self,
+        target_type: vk::PhysicalDeviceType
+    ) -> RqResult<LogicalDeviceBuildStage>
     {
         let devices =  unsafe {
             self.instance
@@ -80,7 +81,7 @@ impl PhysicalDeviceBuildStage {
                 &device,
             )?;
 
-            if check_device_suitable(&self.instance, &device, &swap_chain_support).is_ok() {
+            if check_device_suitable(&self.instance, &device, &swap_chain_support, target_type).is_ok() {
                 return Result::Ok(LogicalDeviceBuildStage {
                     entry: self.entry,
                     messenger: self.messenger,
@@ -99,11 +100,12 @@ impl PhysicalDeviceBuildStage {
 fn check_device_suitable(
     instance: &Instance,
     device: &vk::PhysicalDevice,
-    swap_chain_support: &SwapСhainSupport
+    swap_chain_support: &SwapСhainSupport,
+    target_type: vk::PhysicalDeviceType
 ) ->  Result<(), RenderingError>
 {
     unsafe {
-        check_physical_device(instance, device)?;
+        check_physical_device(instance, device, target_type)?;
         check_extensions_support(instance, device)?;
         check_swap_chain_support(swap_chain_support)?;
     }
@@ -125,7 +127,8 @@ unsafe fn check_swap_chain_support(
 
 unsafe fn check_physical_device(
     instance: &Instance,
-    device: &vk::PhysicalDevice
+    device: &vk::PhysicalDevice,
+    target_type: PhysicalDeviceType
 )->  RqResult<()>
 {
     //Имя, тип, поддерживаемая версия вулкан
@@ -136,9 +139,10 @@ unsafe fn check_physical_device(
     let device_features = instance
         .get_physical_device_features(device.clone());
 
-    if device_properties.device_type != vk::PhysicalDeviceType::DISCRETE_GPU {
+    if device_properties.device_type != target_type {
         return Result::Err(SupportError("device is not GPU."));
     }
+
     if device_features.geometry_shader != vk::TRUE{
         return Result::Err(SupportError("missing geometry shaders support."));
     }

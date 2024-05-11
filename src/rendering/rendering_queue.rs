@@ -76,7 +76,9 @@ impl RenderingQueue {
                 &config.window,
                 config.use_validation_layer
             )?
-            .choose_physical_device()?
+            .choose_physical_device(
+                vk::PhysicalDeviceType::DISCRETE_GPU
+            )?
             .create_logical_device(
                 config.use_validation_layer
             )?
