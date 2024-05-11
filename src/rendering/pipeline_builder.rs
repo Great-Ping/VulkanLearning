@@ -1,25 +1,75 @@
 use vulkanalia::{Device, vk};
 use vulkanalia::vk::{AttachmentLoadOp, AttachmentStoreOp, DeviceV1_0, Handle, HasBuilder, RenderPass, RenderPassCreateInfo};
-use crate::rendering::RenderingError::{CreatePipelineLayoutError, CreateRenderPassError};
+use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError, CreateRenderPassError};
 
 use super::{RqResult, SwapChainData};
 use super::shaders::Shader;
 
 pub struct PipelineBuilder{
-    pub vertex_input_state: vk::PipelineVertexInputStateCreateInfo,
-    pub input_assembly_state: vk::PipelineInputAssemblyStateCreateInfo,
-    pub viewport_state: vk::PipelineViewportStateCreateInfo,
-    pub rasterization_state: vk::PipelineRasterizationStateCreateInfo,
-    pub multisample_state: vk::PipelineMultisampleStateCreateInfo,
-    pub color_blend_state: vk::PipelineColorBlendStateCreateInfo,
-    pub dynamic_state: vk::PipelineDynamicStateCreateInfo,
-    pub pipeline_layout: vk::PipelineLayoutCreateInfo,
     pub fragment_shader_stage: Option<vk::PipelineShaderStageCreateInfo>,
     pub vertex_shader_stage: Option<vk::PipelineShaderStageCreateInfo>
 }
 
 impl PipelineBuilder {
-    pub fn default(swap_chain: &SwapChainData) -> Self {
+    pub fn default() -> Self {
+        return Self {
+            fragment_shader_stage: Option::None,
+            vertex_shader_stage: Option::None
+        };
+    }
+
+    pub fn set_fragment_shader(
+        mut self,
+        shader: &Shader
+    ) -> Self {
+        let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
+            .stage(vk::ShaderStageFlags::FRAGMENT)
+            .module(shader.module.clone())
+            .name(&shader.name)
+            .build();
+
+        self.fragment_shader_stage = Option::Some(shader_stage);
+
+        return self;
+    }
+
+    pub fn set_vertex_shader(
+        mut self,
+        shader: &Shader
+    ) -> Self {
+        let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
+            .stage(vk::ShaderStageFlags::FRAGMENT)
+            .module(shader.module.clone())
+            .name(&shader.name)
+            .build();
+
+        self.vertex_shader_stage = Option::Some(shader_stage);
+
+        return self;
+    }
+
+
+    fn get_stages(&self) -> Vec<vk::PipelineShaderStageCreateInfo>{
+        let mut stages = Vec::with_capacity(2);
+
+        if let Some(stage) = self.vertex_shader_stage {
+            stages.push(stage);
+        }
+
+        if let Some(stage) = self.fragment_shader_stage{
+            stages.push(stage);
+        }
+        return stages;
+    }
+
+
+    pub fn build(
+        self,
+        swap_chain: &SwapChainData,
+        logical_device: &Device,
+        render_pass: &RenderPass
+    ) -> RqResult<vk::Pipeline> {
+
         let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
@@ -104,86 +154,20 @@ impl PipelineBuilder {
 
         let pipeline_layout = vk::PipelineLayoutCreateInfo::default();
 
-
-        return Self {
-            vertex_input_state,
-            input_assembly_state,
-            viewport_state,
-            rasterization_state,
-            multisample_state,
-            color_blend_state,
-            dynamic_state,
-            pipeline_layout,
-
-            fragment_shader_stage: Option::None,
-            vertex_shader_stage: Option::None
-        };
-    }
-
-    pub fn set_fragment_shader(
-        mut self,
-        shader: &Shader
-    ) -> Self {
-        let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
-            .stage(vk::ShaderStageFlags::FRAGMENT)
-            .module(shader.module.clone())
-            .name(&shader.name)
-            .build();
-
-        self.fragment_shader_stage = Option::Some(shader_stage);
-
-        return self;
-    }
-
-    pub fn set_vertex_shader(
-        mut self,
-        shader: &Shader
-    ) -> Self {
-        let shader_stage = vk::PipelineShaderStageCreateInfo::builder()
-            .stage(vk::ShaderStageFlags::FRAGMENT)
-            .module(shader.module.clone())
-            .name(&shader.name)
-            .build();
-
-        self.vertex_shader_stage = Option::Some(shader_stage);
-
-        return self;
-    }
-
-
-    fn get_stages(&self) -> Vec<vk::PipelineShaderStageCreateInfo>{
-        let mut stages = Vec::with_capacity(2);
-
-        if let Some(stage) = self.vertex_shader_stage {
-            stages.push(stage);
-        }
-
-        if let Some(stage) = self.fragment_shader_stage{
-            stages.push(stage);
-        }
-        return stages;
-    }
-
-
-    pub fn build(
-        self,
-        logical_device: &Device,
-        render_pass: &RenderPass
-    ) -> RqResult<vk::GraphicsPipelineCreateInfo> {
         let pipeline_layout = unsafe {
-            logical_device.create_pipeline_layout(&self.pipeline_layout, None)
+            logical_device.create_pipeline_layout(&pipeline_layout, None)
                 .map_err(|err| CreatePipelineLayoutError(err))?
         };
 
-        let pipline_stages = self.get_stages();
+        let pipeline_stages = self.get_stages();
         let grahics_pipeline = vk::GraphicsPipelineCreateInfo::builder()
-            .stages(pipline_stages.as_ref())
-            .vertex_input_state(&self.vertex_input_state)
-            .input_assembly_state(&self.input_assembly_state)
-            .viewport_state(&self.viewport_state)
-            .rasterization_state(&self.rasterization_state)
-            .multisample_state(&self.multisample_state)
-            .color_blend_state(&self.color_blend_state)
+            .stages(pipeline_stages.as_ref())
+            .vertex_input_state(&vertex_input_state)
+            .input_assembly_state(&input_assembly_state)
+            .viewport_state(&viewport_state)
+            .rasterization_state(&rasterization_state)
+            .multisample_state(&multisample_state)
+            .color_blend_state(&color_blend_state)
             .layout(pipeline_layout)
             .render_pass(render_pass.clone())
             .subpass(0)
@@ -191,6 +175,15 @@ impl PipelineBuilder {
             .base_pipeline_index(-1)
             .build();
 
-        Result::Ok(grahics_pipeline)
+
+        let pipelines = unsafe {
+            logical_device.create_graphics_pipelines(
+                vk::PipelineCache::null(),
+                &[grahics_pipeline],
+                None
+            ).map_err(|err| BuildPipelinesError(err))?
+        };
+
+        Result::Ok(pipelines.0[0])
     }
 }

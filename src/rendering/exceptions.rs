@@ -21,5 +21,6 @@ pub enum RenderingError {
 
     CreateRenderPassError(ErrorCode),
     CreatePipelineLayoutError(ErrorCode),
+    BuildPipelinesError(ErrorCode),
     CreateFrameBufferError(ErrorCode),
 }

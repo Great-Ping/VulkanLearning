@@ -19,11 +19,11 @@ pub struct FramebuffersBuildStage{
 }
 
 impl FramebuffersBuildStage {
-    fn create_framebuffers(self) -> RqResult<CommandBufferBuildStage>{
+    pub fn create_framebuffers(self) -> RqResult<CommandBufferBuildStage>{
         let mut framebuffers = Vec::with_capacity(self.swap_chain.image_views.len());
 
-        for imageView in self.swap_chain.image_views {
-            let attachments = &[*imageView];
+        for imageView in &self.swap_chain.image_views {
+            let attachments = &[imageView.clone()];
             let framebuffer_info = vk::FramebufferCreateInfo::builder()
                 .render_pass(*self.render_pass)
                 .attachments(attachments)

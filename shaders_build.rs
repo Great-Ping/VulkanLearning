@@ -106,7 +106,6 @@ fn main(){
     let out_dir = concat_paths(&manifest_dir, "target");
     let out_dir = concat_paths(&out_dir, &profile_dir);
 
-
     let vulkan_sdk_path = env::var("VK_SDK_PATH").unwrap();
     let compiler_path = vulkan_sdk_path + "\\Bin\\glslc.exe";
 
@@ -115,7 +114,7 @@ fn main(){
 
     println!("cargo::rerun-if-changed={}", shaders_directory);
 
-    fs::remove_dir_all(&shaders_out_dir);
+    let _ = fs::remove_dir_all(&shaders_out_dir);
 
     let compiler = ShadersCompiler {
         compiler_path,

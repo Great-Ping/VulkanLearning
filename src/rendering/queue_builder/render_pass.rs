@@ -71,7 +71,7 @@ impl RenderPassBuildStage{
             surface: self.surface,
             swap_chain: self.swap_chain,
             render_pass: Box::new(render_pass),
-            pipelines_info: LinkedList::default(),
+            pipelines: LinkedList::default(),
         })
     }
 }

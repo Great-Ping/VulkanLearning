@@ -1,5 +1,5 @@
 use std::collections::LinkedList;
-use std::env;
+use std::{env, path};
 use std::ops::Range;
 use log::{debug, info};
 use winit::raw_window_handle::{
@@ -19,19 +19,12 @@ use vulkanalia::{
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::window::create_surface;
 use vulkanalia::vk;
-use vulkanalia::vk::{
-    DeviceV1_0,
-    InstanceV1_0,
-    ExtDebugUtilsExtension,
-    Handle,
-    HasBuilder,
-    KhrSurfaceExtension,
-    KhrSwapchainExtension
-};
+use vulkanalia::vk::{DeviceV1_0, InstanceV1_0, ExtDebugUtilsExtension, Handle, HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension, ShaderRequiredSubgroupSizeCreateInfoEXT};
 use winit::dpi::PhysicalSize;
+use crate::rendering::RenderingError::{LoadShadersError, SupportError};
 
 use super::shaders::Shader;
-use super::{RenderingPipelineConfig, QueueFamilyIndices, RenderingError, SwapChainData, get_debug_info, RqResult};
+use super::{RenderingPipelineConfig, QueueFamilyIndices, RenderingError, SwapChainData, get_debug_info, RqResult, PipelineBuilder};
 
 #[derive(Debug)]
 pub struct RenderingQueue {
@@ -109,7 +102,7 @@ impl RenderingQueue {
 
 
         let now = std::time::Instant::now();
-        let rendering_queue = rendering_queue.create_swap_chain(
+        let swap_chain = rendering_queue.create_swap_chain(
             &config.rendering_resolution,
             vk::SwapchainKHR::null()
         )?;
@@ -118,9 +111,37 @@ impl RenderingQueue {
         info!("Swap chain creation duration: {:?}", elapsed);
 
         let now = std::time::Instant::now();
-        let rendering_queue = rendering_queue.build();
+        let render_pass = swap_chain.create_render_pass()?;
 
-        Result::Ok(rendering_queue)
+        let elapsed = now.elapsed();
+        info!("Render pass creation duration: {:?}", elapsed);
+
+        let mut path_to = env::current_exe()
+            .map_err(|err|LoadShadersError(String::from("Unable to get the path")))?;
+        path_to.pop();
+        path_to.push("assets");
+        path_to.push("shaders");
+        path_to.push("Example.frag.spv");
+        let mut buffer = Vec::with_capacity(4096);
+        let fragShader = Shader::read_file(&path_to, &render_pass.logical_device, &mut buffer)?;
+        path_to.pop();
+        path_to.push("Example.vert.spv");
+        let vertShader = Shader::read_file(&path_to, &render_pass.logical_device, &mut buffer)?;
+        let now = std::time::Instant::now();
+        let pipelines = render_pass
+            .add_pipeline(&vertShader, &fragShader)?
+            .build_pipelines()?;
+
+        let elapsed = now.elapsed();
+        info!("pipelines creation duration: {:?}", elapsed);
+
+
+        let now = std::time::Instant::now();
+        let framebuffer = pipelines.create_framebuffers();
+        let elapsed = now.elapsed();
+        info!("Framebuffer creation duration: {:?}", elapsed);
+
+        Result::Err(SupportError("Not implemented"))
     }
 }
 

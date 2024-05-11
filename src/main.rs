@@ -29,7 +29,7 @@ fn main(){
 
     let config = RenderingPipelineConfig{
         window: &window,
-        use_validation_layer: cfg!(debug_assertions),
+        use_validation_layer: true,
         rendering_resolution: RenderingResolution::from(window.inner_size())
     };
 
