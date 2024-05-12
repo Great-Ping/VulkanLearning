@@ -75,8 +75,7 @@ impl EndBuildStage {
 
 impl RenderingQueue {
 
-    pub fn builder(
-    ) -> RenderingQueueBuilder {
+    pub fn builder() -> RenderingQueueBuilder {
         return RenderingQueueBuilder::new();
     }
 }

@@ -31,9 +31,9 @@ pub struct SwapChainData{
 pub struct SwapChainBuildStage {
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
-    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
-    pub surface: Box<vk::SurfaceKHR>,
-    pub physical_device: Box<vk::PhysicalDevice>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
+    pub surface: vk::SurfaceKHR,
+    pub physical_device: vk::PhysicalDevice,
     pub logical_device: Box<Device>,
     pub queue_families: QueueFamilyIndices,
     pub swap_chain_support: Box<SwapСhainSupport>,
@@ -65,7 +65,7 @@ impl SwapChainBuildStage  {
         };
 
         let swap_chain_info = vk::SwapchainCreateInfoKHR::builder()
-            .surface(*self.surface)
+            .surface(self.surface)
             .min_image_count(image_count)
             .image_format(format.format)
             .image_color_space(format.color_space)

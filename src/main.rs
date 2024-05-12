@@ -21,7 +21,7 @@ fn main(){
         .init()
         .expect("logger initialization exception");
 
-    log::set_max_level(LevelFilter::Debug);
+    log::set_max_level(LevelFilter::Error);
 
     let window =
         ApplicationWindow::new()
@@ -33,13 +33,8 @@ fn main(){
         rendering_resolution: RenderingResolution::from(window.inner_size())
     };
 
-    let now = std::time::Instant::now();
-
     let rendering_queue = RenderingQueue::create(&config)
         .expect("rendering queue create exception");
-
-    let elapsed = now.elapsed();
-    info!("Queue creation duration: {:?}", elapsed);
 
     window.run()
         .expect("main loop exception");

@@ -77,7 +77,7 @@ impl RenderingQueue {
                 config.use_validation_layer
             )?
             .choose_physical_device(
-                vk::PhysicalDeviceType::DISCRETE_GPU
+                vk::PhysicalDeviceType::INTEGRATED_GPU
             )?
             .create_logical_device(
                 config.use_validation_layer
@@ -101,8 +101,7 @@ impl RenderingQueue {
 
         let renedering_queue = rendering_queue
             .add_pipeline(&vertShader, &fragShader)?
-            .build_pipelines()?
-            .create_framebuffers();
+            .create_framebuffers()?;
 
         Result::Err(SupportError("Not implemented"))
     }

@@ -8,6 +8,7 @@ mod adding_pipelines;
 mod framebuffers;
 mod render_pass;
 mod command_buffer;
+mod command_pool;
 
 pub use validation_layer::*;
 pub use instance::*;

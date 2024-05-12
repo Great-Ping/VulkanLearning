@@ -1,21 +1,20 @@
 use std::collections::LinkedList;
 use vulkanalia::{Device, Entry, Instance, vk};
 use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder};
-use crate::rendering::{FramebuffersBuildStage, QueueFamilyIndices, RqResult, SwapChainData};
+use crate::rendering::{FramebuffersBuildStage, QueueFamilyIndices, RenderingQueue, RqResult, SwapChainData};
 use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError};
 use crate::rendering::shaders::Shader;
 
 pub struct PipelineAddingStage{
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
-    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
-    pub physical_device: Box<vk::PhysicalDevice>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
+    pub physical_device: vk::PhysicalDevice,
     pub logical_device: Box<Device>,
     pub queue_families:QueueFamilyIndices,
-    pub surface: Box<vk::SurfaceKHR>,
+    pub surface: vk::SurfaceKHR,
     pub swap_chain: Box<SwapChainData>,
-    pub render_pass: Box<vk::RenderPass>,
-    pub pipelines: LinkedList<vk::Pipeline>
+    pub render_pass: vk::RenderPass
 }
 
 
@@ -24,20 +23,20 @@ impl PipelineAddingStage{
         mut self,
         vertex_shader: &Shader,
         fragment_shader: &Shader,
-    ) -> RqResult<Self> {
+    ) -> RqResult<FramebuffersBuildStage> {
         let vertex_shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::VERTEX)
             .module(vertex_shader.module.clone())
-            .name(&vertex_shader.name.as_slice())
+            .name(vertex_shader.name.as_slice())
             .build();
 
-        let fragment_stage = vk::PipelineShaderStageCreateInfo::builder()
+        let fragment_shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::FRAGMENT)
             .module(fragment_shader.module.clone())
             .name(fragment_shader.name.as_slice())
             .build();
 
-        let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::builder().build()  ;
+        let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
 
         let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
             .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
@@ -55,7 +54,8 @@ impl PipelineAddingStage{
 
         let scissor = vk::Rect2D::builder()
             .offset(vk::Offset2D { x: 0, y: 0 })
-            .extent(self.swap_chain.extent);
+            .extent(self.swap_chain.extent)
+            .build();
 
         let viewports = &[viewport];
         let scissors = &[scissor];
@@ -119,16 +119,16 @@ impl PipelineAddingStage{
             .dynamic_states(dynamic_states)
             .build();
 
-        let layout_info = vk::PipelineLayoutCreateInfo::builder().build();
+        let layout_info = vk::PipelineLayoutCreateInfo::default();
 
         let pipeline_layout = unsafe {
             self.logical_device.create_pipeline_layout(&layout_info, None)
                 .map_err(|err| CreatePipelineLayoutError(err))?
         };
 
-        let pipeline_stages = &[vertex_shader_stage, fragment_stage];
+        let pipeline_stages = &[vertex_shader_stage, fragment_shader_stage];
         let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
-            .stages(pipeline_stages.as_ref())
+            .stages(pipeline_stages)
             .vertex_input_state(&vertex_input_state)
             .input_assembly_state(&input_assembly_state)
             .viewport_state(&viewport_state)
@@ -136,12 +136,12 @@ impl PipelineAddingStage{
             .multisample_state(&multisample_state)
             .color_blend_state(&color_blend_state)
             .layout(pipeline_layout)
-            .render_pass(*self.render_pass)
+            .render_pass(self.render_pass)
             .subpass(0)
-            .base_pipeline_handle(vk::Pipeline::null())
-            .base_pipeline_index(-1)
+            .dynamic_state(&dynamic_state)
+            // .base_pipeline_handle(vk::Pipeline::null())
+            // .base_pipeline_index(-1)
             .build();
-
 
         let pipelines = unsafe {
             self.logical_device.create_graphics_pipelines(
@@ -152,14 +152,6 @@ impl PipelineAddingStage{
         };
 
         let pipeline = pipelines.0[0];
-        self.pipelines.push_back(pipeline);
-
-        Result::Ok(self)
-    }
-
-    pub fn build_pipelines(self) -> RqResult<FramebuffersBuildStage> {
-        let pipelines = self.pipelines.into_iter()
-            .collect::<Vec<_>>();
 
         Result::Ok(FramebuffersBuildStage{
             entry: self.entry,
@@ -171,7 +163,7 @@ impl PipelineAddingStage{
             surface: self.surface,
             swap_chain: self.swap_chain,
             render_pass: self.render_pass,
-            pipelines: pipelines,
+            pipeline,
         })
     }
 }

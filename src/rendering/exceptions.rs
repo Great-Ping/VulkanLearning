@@ -23,4 +23,5 @@ pub enum RenderingError {
     CreatePipelineLayoutError(ErrorCode),
     BuildPipelinesError(ErrorCode),
     CreateFrameBufferError(ErrorCode),
+    CreateCommandPoolError(ErrorCode)
 }

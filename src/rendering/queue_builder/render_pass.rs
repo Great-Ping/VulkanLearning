@@ -8,11 +8,11 @@ use crate::rendering::RenderingError::CreateRenderPassError;
 pub struct RenderPassBuildStage {
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
-    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
-    pub physical_device: Box<vk::PhysicalDevice>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
+    pub physical_device: vk::PhysicalDevice,
     pub logical_device: Box<Device>,
-    pub queue_families:QueueFamilyIndices,
-    pub surface: Box<vk::SurfaceKHR>,
+    pub queue_families: QueueFamilyIndices,
+    pub surface: vk::SurfaceKHR,
     pub swap_chain: Box<SwapChainData>
 }
 
@@ -70,8 +70,7 @@ impl RenderPassBuildStage{
             queue_families: self.queue_families,
             surface: self.surface,
             swap_chain: self.swap_chain,
-            render_pass: Box::new(render_pass),
-            pipelines: LinkedList::default(),
+            render_pass: render_pass
         })
     }
 }

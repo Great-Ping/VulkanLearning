@@ -48,7 +48,7 @@ impl InstanceBuildStage {
         let application_info = ApplicationInfo::builder()
             .application_name(b"Vulkan Learning\0")
             .application_version(make_version(1, 0, 0))
-            .engine_name(b"Hello World Engine\0")
+            .engine_name(b"No Engine\0")
             .engine_version(make_version(1, 0, 0))
             .api_version(make_version(1, 0, 0))
             .build();
@@ -83,7 +83,7 @@ impl InstanceBuildStage {
                 instance.create_debug_utils_messenger_ext(&debug_info, None)
                     .map_err(|err| CreateInstanceError(err))?
             };
-            Some(Box::new(messenger))
+            Some(messenger)
         } else {
             None
         };
@@ -97,7 +97,7 @@ impl InstanceBuildStage {
             entry: self.entry,
             instance: Box::new(instance),
             messenger: messenger,
-            surface: Box::new(window_surface),
+            surface: window_surface,
         })
     }
 }
@@ -128,8 +128,7 @@ unsafe fn get_layers(
         .enumerate_instance_layer_properties()
         .map_err(|err| CreateInstanceError(err))?;
 
-    let available_layers = layers
-        .iter()
+    let available_layers = layers.iter()
         .map(|layer| layer.layer_name)
         .collect::<HashSet<_>>();
 

@@ -57,8 +57,8 @@ impl QueueFamilyIndices{
 pub struct PhysicalDeviceBuildStage{
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
-    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
-    pub surface: Box<vk::SurfaceKHR>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
+    pub surface: vk::SurfaceKHR,
 }
 
 impl PhysicalDeviceBuildStage {
@@ -86,7 +86,7 @@ impl PhysicalDeviceBuildStage {
                     entry: self.entry,
                     messenger: self.messenger,
                     instance: self.instance,
-                    physical_device: Box::new(device),
+                    physical_device: device,
                     surface: self.surface,
                     queue_families: queue_families,
                     swap_chain_support: Box::new(swap_chain_support)

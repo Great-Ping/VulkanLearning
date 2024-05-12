@@ -33,10 +33,10 @@ pub const REQUIRED_EXTENSIONS: &[ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.
 
 pub struct LogicalDeviceBuildStage {
     pub entry: Box<Entry>,
-    pub messenger: Option<Box<DebugUtilsMessengerEXT>>,
+    pub messenger: Option<DebugUtilsMessengerEXT>,
     pub instance: Box<Instance>,
-    pub surface: Box<SurfaceKHR>,
-    pub physical_device: Box<PhysicalDevice>,
+    pub surface: SurfaceKHR,
+    pub physical_device: PhysicalDevice,
     pub queue_families: QueueFamilyIndices,
     pub swap_chain_support: Box<SwapСhainSupport>,
 }
@@ -54,8 +54,7 @@ impl LogicalDeviceBuildStage {
 
         let layers = get_layers(use_validation_layer);
         let extensions = get_extensions();
-        let features = PhysicalDeviceFeatures::builder()
-            .build();
+        let features = PhysicalDeviceFeatures::default();
 
         let device_info = DeviceCreateInfo::builder()
             .queue_create_infos(&queue_infos)
@@ -65,7 +64,7 @@ impl LogicalDeviceBuildStage {
             .build();
 
         let logical_device = unsafe {
-            self.instance.create_device(*self.physical_device, &device_info, None)
+            self.instance.create_device(self.physical_device, &device_info, None)
                 .map_err(|err| CreateLogicalDeviceError(err))?
         };
 
@@ -103,13 +102,13 @@ unsafe fn create_queue_infos(
 ) -> Vec<DeviceQueueCreateInfo> {
     let unique_indices = queue_indices.get_unique_indices();
 
-    let queue_priorities = [1.0];
+    let queue_priorities = &[1.0];
     let queue_infos = unique_indices
         .iter()
         .map(|queue_index|{
             DeviceQueueCreateInfo::builder()
-                .queue_family_index(queue_index.clone())
-                .queue_priorities(&queue_priorities)
+                .queue_family_index(*queue_index)
+                .queue_priorities(queue_priorities)
                 .build()
         })
         .collect::<Vec<_>>();
