@@ -1,13 +1,9 @@
-use vulkanalia::{
-    Device,
-    Entry,
-    Instance
-};
+use vulkanalia::prelude::v1_0::*;
 use vulkanalia::loader::{
     LibloadingLoader,
     LIBRARY
 };
-use vulkanalia::vk;
+use vulkanalia::vk::Semaphore;
 
 use crate::rendering::{
     RenderingQueue,
@@ -20,8 +16,6 @@ use crate::rendering::RenderingError::{
 
 use super::{
     InstanceBuildStage,
-    QueueFamilyIndices,
-    SwapChainData
 };
 
 pub struct RenderingQueueBuilder;
@@ -50,12 +44,19 @@ impl RenderingQueueBuilder {
 pub struct EndBuildStage {
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
-    pub messenger: Option<Box<vk::DebugUtilsMessengerEXT>>,
-    pub physical_device: Box<vk::PhysicalDevice>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
+    pub physical_device: vk::PhysicalDevice,
     pub logical_device: Box<Device>,
-    pub queue_families:QueueFamilyIndices,
-    pub surface: Box<vk::SurfaceKHR>,
-    pub swap_chain: Box<SwapChainData>
+    pub queue_families: super::QueueFamilyIndices,
+    pub surface: vk::SurfaceKHR,
+    pub swap_chain: Box<super::SwapChainData>,
+    pub render_pass: vk::RenderPass,
+    pub pipeline: vk::Pipeline,
+    pub framebuffers: Vec<vk::Framebuffer>,
+    pub command_pool: vk::CommandPool,
+    pub command_buffers: Vec<vk::CommandBuffer>,
+    pub image_available_semaphore: Semaphore,
+    pub render_finished_semaphore: Semaphore
 }
 
 impl EndBuildStage {
@@ -68,7 +69,14 @@ impl EndBuildStage {
             self.logical_device,
             self.queue_families,
             self.surface,
-            self.swap_chain
+            self.swap_chain,
+            self.render_pass,
+            self.pipeline,
+            self.framebuffers,
+            self.command_pool,
+            self.command_buffers,
+            self.image_available_semaphore,
+            self.render_finished_semaphore
         )
     }
 }

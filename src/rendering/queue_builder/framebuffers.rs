@@ -1,6 +1,4 @@
-use std::collections::LinkedList;
-use vulkanalia::{Device, Entry, Instance, vk};
-use vulkanalia::vk::{DeviceV1_0, HasBuilder, RenderPass};
+use vulkanalia::prelude::v1_0::*;
 use crate::rendering::queue_builder::command_pool::CommandPoolBuildStage;
 use crate::rendering::RenderingError::CreateFrameBufferError;
 use crate::rendering::RqResult;
@@ -14,7 +12,7 @@ pub struct FramebuffersBuildStage{
     pub queue_families: super::QueueFamilyIndices,
     pub surface: vk::SurfaceKHR,
     pub swap_chain: Box<super::SwapChainData>,
-    pub render_pass: RenderPass,
+    pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline
 }
 

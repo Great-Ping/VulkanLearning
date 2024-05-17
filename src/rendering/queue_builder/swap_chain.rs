@@ -1,22 +1,15 @@
 use std::collections::HashSet;
-use vulkanalia::{
-    Device,
-    Entry,
-    Instance
-};
-use vulkanalia::vk;
+
+use vulkanalia::prelude::v1_0::*;
 use vulkanalia::vk::{
-    DeviceV1_0,
     HasBuilder,
     KhrSurfaceExtension,
     KhrSwapchainExtension
 };
+use winit::dpi::PhysicalSize;
 
-use super::{
-    QueueFamilyIndices,
-    PipelineAddingStage
-};
-use crate::rendering::{RenderingResolution, RenderPassBuildStage, RqResult};
+use super::QueueFamilyIndices;
+use crate::rendering::{ RenderPassBuildStage, RqResult};
 use crate::rendering::RenderingError::{CreateSwapChainError, SupportError};
 
 #[derive(Debug)]
@@ -26,6 +19,20 @@ pub struct SwapChainData{
     pub images: Vec<vk::Image>,
     pub image_views: Vec<vk::ImageView>,
     pub format: vk::Format
+}
+
+pub struct RenderingResolution {
+    pub width: u32,
+    pub height: u32
+}
+
+impl From<PhysicalSize<u32>> for RenderingResolution{
+    fn from(size: PhysicalSize<u32>) -> Self {
+        Self {
+            width: size.width,
+            height: size.height,
+        }
+    }
 }
 
 pub struct SwapChainBuildStage {
@@ -42,7 +49,7 @@ pub struct SwapChainBuildStage {
 impl SwapChainBuildStage  {
     pub fn create_swap_chain(
         self,
-        rendering_resolution: &RenderingResolution,
+        rendering_resolution: RenderingResolution,
         old_swapchain: vk::SwapchainKHR
     ) -> RqResult<RenderPassBuildStage>
     {
@@ -160,7 +167,7 @@ impl SwapСhainSupport {
 }
 
 fn choose_swap_chain_extent(
-    rendering_resolution: &RenderingResolution,
+    rendering_resolution: RenderingResolution,
     capabilities: &vk::SurfaceCapabilitiesKHR
 ) -> vk::Extent2D
 {

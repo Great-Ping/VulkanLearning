@@ -1,13 +1,8 @@
 use std::collections::HashSet;
 
-use vulkanalia::{
-    Entry,
-    Instance,
-    prelude::v1_0::InstanceV1_0
-};
+use vulkanalia::prelude::v1_0::*;
 
-use vulkanalia::vk;
-use vulkanalia::vk::{KhrSurfaceExtension, PhysicalDeviceType};
+use vulkanalia::vk::KhrSurfaceExtension;
 use crate::rendering::{RenderingError, RqResult};
 use crate::rendering::RenderingError::{ChoosePhysicalDeviceError, SupportError};
 
@@ -128,7 +123,7 @@ unsafe fn check_swap_chain_support(
 unsafe fn check_physical_device(
     instance: &Instance,
     device: &vk::PhysicalDevice,
-    target_type: PhysicalDeviceType
+    target_type: vk::PhysicalDeviceType
 )->  RqResult<()>
 {
     //Имя, тип, поддерживаемая версия вулкан

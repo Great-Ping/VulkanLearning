@@ -1,5 +1,4 @@
-use vulkanalia::{Device, Entry, Instance, vk};
-use vulkanalia::vk::{DeviceV1_0, HasBuilder, RenderPass};
+use vulkanalia::prelude::v1_0::*;
 use crate::rendering::queue_builder::command_buffer::CommandBufferBuildStage;
 use crate::rendering::RenderingError::CreateCommandPoolError;
 use crate::rendering::RqResult;
@@ -13,7 +12,7 @@ pub struct CommandPoolBuildStage {
     pub queue_families: super::QueueFamilyIndices,
     pub surface: vk::SurfaceKHR,
     pub swap_chain: Box<super::SwapChainData>,
-    pub render_pass: RenderPass,
+    pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline,
     pub framebuffers: Vec<vk::Framebuffer>
 }

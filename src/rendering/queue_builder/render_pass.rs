@@ -1,6 +1,4 @@
-use std::collections::LinkedList;
-use vulkanalia::{Device, Entry, Instance, vk};
-use vulkanalia::vk::{AttachmentLoadOp, AttachmentStoreOp, DeviceV1_0, HasBuilder};
+use vulkanalia::prelude::v1_0::*;
 use super::PipelineAddingStage;
 use crate::rendering::{QueueFamilyIndices, RqResult, SwapChainData};
 use crate::rendering::RenderingError::CreateRenderPassError;
@@ -27,8 +25,8 @@ impl RenderPassBuildStage{
             .load_op(vk::AttachmentLoadOp::CLEAR) //Отчистка фрейм буфера
             .store_op(vk::AttachmentStoreOp::STORE) // Сохраняем в памяти
             //Применяются к данным трафарета
-            .stencil_load_op(AttachmentLoadOp::DONT_CARE)
-            .stencil_store_op(AttachmentStoreOp::DONT_CARE)
+            .stencil_load_op(vk::AttachmentLoadOp::DONT_CARE)
+            .stencil_store_op(vk::AttachmentStoreOp::DONT_CARE)
             //Макет изоражения до начала этапа рендеринга
             .initial_layout(vk::ImageLayout::UNDEFINED)
             //После

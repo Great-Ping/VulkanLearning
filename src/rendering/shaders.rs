@@ -3,9 +3,10 @@ use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
 
-use vulkanalia::{Device, vk};
+use vulkanalia::prelude::v1_0::*;
+use vulkanalia::vk;
 use vulkanalia::bytecode::Bytecode;
-use vulkanalia::vk::{DeviceV1_0, HasBuilder, ShaderModule, ShaderModuleCreateInfo};
+use vulkanalia::vk::{HasBuilder, ShaderModule};
 
 use crate::rendering::RenderingError::LoadShadersError;
 use crate::rendering::RqResult;

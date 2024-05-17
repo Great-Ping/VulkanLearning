@@ -1,6 +1,4 @@
-use std::collections::LinkedList;
-use vulkanalia::{Device, Entry, Instance, vk};
-use vulkanalia::vk::{DeviceV1_0, Handle, HasBuilder};
+use vulkanalia::prelude::v1_0::*;
 use crate::rendering::{FramebuffersBuildStage, QueueFamilyIndices, RenderingQueue, RqResult, SwapChainData};
 use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError};
 use crate::rendering::shaders::Shader;
@@ -110,14 +108,14 @@ impl PipelineAddingStage{
             .blend_constants([0.0, 0.0, 0.0, 0.0])
             .build();
 
-        let dynamic_states = &[
-            vk::DynamicState::VIEWPORT,
-            vk::DynamicState::LINE_WIDTH
-        ];
-
-        let dynamic_state = vk::PipelineDynamicStateCreateInfo::builder()
-            .dynamic_states(dynamic_states)
-            .build();
+        // let dynamic_states = &[
+        //     vk::DynamicState::VIEWPORT,
+        //     vk::DynamicState::LINE_WIDTH
+        // ];
+        //
+        // let dynamic_state = vk::PipelineDynamicStateCreateInfo::builder()
+        //     .dynamic_states(dynamic_states)
+        //     .build();
 
         let layout_info = vk::PipelineLayoutCreateInfo::default();
 
@@ -138,7 +136,7 @@ impl PipelineAddingStage{
             .layout(pipeline_layout)
             .render_pass(self.render_pass)
             .subpass(0)
-            .dynamic_state(&dynamic_state)
+            // .dynamic_state(&dynamic_state)
             // .base_pipeline_handle(vk::Pipeline::null())
             // .base_pipeline_index(-1)
             .build();

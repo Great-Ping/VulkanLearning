@@ -1,24 +1,6 @@
 use std::ffi::c_char;
-use winit::raw_window_handle::{
-    HasDisplayHandle,
-    HasWindowHandle
-};
 
-use vulkanalia::{
-    Entry,
-    Instance,
-    vk
-};
-use vulkanalia::vk::{
-    HasBuilder,
-    DeviceQueueCreateInfo,
-    DeviceCreateInfo,
-    PhysicalDeviceFeatures,
-    SurfaceKHR,
-    ExtensionName,
-    PhysicalDevice,
-    DebugUtilsMessengerEXT
-};
+use vulkanalia::prelude::v1_0::*;
 use crate::rendering::{RenderingError, RqResult};
 use crate::rendering::RenderingError::CreateLogicalDeviceError;
 
@@ -29,14 +11,14 @@ use super::{
     VALIDATION_LAYER
 };
 
-pub const REQUIRED_EXTENSIONS: &[ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
+pub const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
 
 pub struct LogicalDeviceBuildStage {
     pub entry: Box<Entry>,
-    pub messenger: Option<DebugUtilsMessengerEXT>,
+    pub messenger: Option<vk::DebugUtilsMessengerEXT>,
     pub instance: Box<Instance>,
-    pub surface: SurfaceKHR,
-    pub physical_device: PhysicalDevice,
+    pub surface: vk::SurfaceKHR,
+    pub physical_device: vk::PhysicalDevice,
     pub queue_families: QueueFamilyIndices,
     pub swap_chain_support: Box<SwapСhainSupport>,
 }
@@ -54,11 +36,11 @@ impl LogicalDeviceBuildStage {
 
         let layers = get_layers(use_validation_layer);
         let extensions = get_extensions();
-        let features = PhysicalDeviceFeatures::default();
+        let features = vk::PhysicalDeviceFeatures::default();
 
-        let device_info = DeviceCreateInfo::builder()
+        let device_info = vk::DeviceCreateInfo::builder()
             .queue_create_infos(&queue_infos)
-            .enabled_layer_names(&layers)
+            .enabled_layer_names(&layers) // eprecated?
             .enabled_extension_names(&extensions)
             .enabled_features(&features)
             .build();
@@ -99,14 +81,14 @@ fn get_layers(use_validation_layer: bool) -> Vec<*const c_char> {
 
 unsafe fn create_queue_infos(
     queue_indices: &QueueFamilyIndices
-) -> Vec<DeviceQueueCreateInfo> {
+) -> Vec<vk::DeviceQueueCreateInfo> {
     let unique_indices = queue_indices.get_unique_indices();
 
     let queue_priorities = &[1.0];
     let queue_infos = unique_indices
         .iter()
         .map(|queue_index|{
-            DeviceQueueCreateInfo::builder()
+            vk::DeviceQueueCreateInfo::builder()
                 .queue_family_index(*queue_index)
                 .queue_priorities(queue_priorities)
                 .build()

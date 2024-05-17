@@ -1,28 +1,22 @@
 use std::collections::HashSet;
 use core::ffi::c_char;
 
+use vulkanalia::prelude::v1_0::*;
 use winit::raw_window_handle::{
     HasDisplayHandle,
     HasWindowHandle
 };
 
 use vulkanalia::Entry;
+use vulkanalia::vk::ExtDebugUtilsExtension;
+use vulkanalia::vk::KhrSurfaceExtension;
+use vulkanalia::vk::KhrSwapchainExtension;
 use vulkanalia::window::{
     create_surface,
     get_required_instance_extensions
 };
 
-use vulkanalia::vk;
-use vulkanalia::vk::{
-    EntryV1_0,
-    HasBuilder,
-    InstanceCreateFlags,
-    InstanceCreateInfo,
-    ApplicationInfo,
-    make_version,
-    ExtDebugUtilsExtension
-};
-use crate::rendering::{RenderingError, RqResult};
+use crate::rendering::{RqResult};
 use crate::rendering::RenderingError::{
     CreateInstanceError,
     SupportError
@@ -45,12 +39,12 @@ impl InstanceBuildStage {
     ) -> RqResult<PhysicalDeviceBuildStage>
     where TWindow: HasDisplayHandle + HasWindowHandle {
 
-        let application_info = ApplicationInfo::builder()
+        let application_info = vk::ApplicationInfo::builder()
             .application_name(b"Vulkan Learning\0")
-            .application_version(make_version(1, 0, 0))
+            .application_version(vk::make_version(1, 0, 0))
             .engine_name(b"No Engine\0")
-            .engine_version(make_version(1, 0, 0))
-            .api_version(make_version(1, 0, 0))
+            .engine_version(vk::make_version(1, 0, 0))
+            .api_version(vk::make_version(1, 0, 0))
             .build();
 
         let extensions = get_extensions(window, use_validation_layer);
@@ -58,11 +52,11 @@ impl InstanceBuildStage {
             get_layers(&self.entry, use_validation_layer)?
         };
 
-        let mut instance_info = InstanceCreateInfo::builder()
+        let mut instance_info = vk::InstanceCreateInfo::builder()
             .application_info(&application_info)
             .enabled_extension_names(&extensions)
             .enabled_layer_names(&layers)
-            .flags(InstanceCreateFlags::empty());
+            .flags(vk::InstanceCreateFlags::empty());
 
 
         let mut debug_info=  get_debug_info();
