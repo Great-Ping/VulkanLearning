@@ -66,7 +66,7 @@ fn processing_window_event(
     match event {
         WindowEvent::RedrawRequested => {
             if !target_window.exiting() {
-                rendering_queue.render().unwrap();
+                _ = rendering_queue.render();
             }
         }
         WindowEvent::CloseRequested => {

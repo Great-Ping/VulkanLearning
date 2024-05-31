@@ -3,7 +3,7 @@ use vulkanalia::loader::{
     LibloadingLoader,
     LIBRARY
 };
-use vulkanalia::vk::Semaphore;
+use vulkanalia::vk::{PipelineLayout, Semaphore};
 
 use crate::rendering::{DeviceQueues, RenderingQueue, RqResult};
 use crate::rendering::RenderingError::{
@@ -46,6 +46,7 @@ pub struct EndBuildStage {
     pub swap_chain: Box<super::SwapChainData>,
     pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline,
+    pub pipeline_layout: PipelineLayout,
     pub framebuffers: Vec<vk::Framebuffer>,
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>,
@@ -82,6 +83,7 @@ impl EndBuildStage {
             self.swap_chain,
             self.render_pass,
             self.pipeline,
+            self.pipeline_layout,
             self.framebuffers,
             self.command_pool,
             self.command_buffers,

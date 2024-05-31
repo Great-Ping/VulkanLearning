@@ -17,7 +17,7 @@ use vulkanalia::prelude::v1_0::*;
 use vulkanalia::bytecode::Bytecode;
 use vulkanalia::window::create_surface;
 use vulkanalia::vk;
-use vulkanalia::vk::{ExtDebugUtilsExtension, Fence, KhrSurfaceExtension, KhrSwapchainExtension, Semaphore};
+use vulkanalia::vk::{ExtDebugUtilsExtension, Fence, KhrSurfaceExtension, KhrSwapchainExtension, PipelineLayout, Semaphore};
 use winit::dpi::PhysicalSize;
 use crate::rendering::RenderingError::{AcquireImageError, LoadShadersError, PresentationError, QueueSubmitError, ResetFenceError, SupportError, WaitForFencesError};
 
@@ -36,6 +36,7 @@ pub struct RenderingQueue {
     swap_chain: Box<SwapChainData>,
     render_pass: vk::RenderPass,
     pipeline: vk::Pipeline,
+    pipeline_layout: vk::PipelineLayout,
     framebuffers: Vec<vk::Framebuffer>,
     command_pool: vk::CommandPool,
     command_buffers: Vec<vk::CommandBuffer>,
@@ -61,6 +62,7 @@ impl RenderingQueue {
         swap_chain: Box<super::SwapChainData>,
         render_pass: vk::RenderPass,
         pipeline: vk::Pipeline,
+        pipeline_layout: vk::PipelineLayout,
         framebuffers: Vec<vk::Framebuffer>,
         command_pool: vk::CommandPool,
         command_buffers: Vec<vk::CommandBuffer>,
@@ -88,6 +90,7 @@ impl RenderingQueue {
             swap_chain,
             render_pass,
             pipeline,
+            pipeline_layout,
             framebuffers,
             command_pool,
             command_buffers,
@@ -116,13 +119,6 @@ impl RenderingQueue {
             let image_fence = self.swapchain_image_fences[current_image as usize];
 
             self.swapchain_image_fences[current_image as usize] = frame_fence;
-
-
-            debug!("frame: {0:?} image: {1:?}",
-                current_frame,
-                current_image
-            );
-
 
             let result = self.render_one_frame(
                 image_semaphore, finished_semaphore,
@@ -161,7 +157,7 @@ impl RenderingQueue {
         let wait_semaphores = &[image_available_semaphore];
         let wait_stages = &[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
 
-        let command_buffers = &[self.command_buffers[image_index as usize]];
+        let command_buffers = &[self.command_buffers[image_index]];
         let signal_semaphores = &[render_finished_semaphore];
 
         let submit_info = vk::SubmitInfo::builder()
@@ -175,7 +171,7 @@ impl RenderingQueue {
             .map_err(|err| WaitForFencesError(err))?;
 
         self.logical_device.queue_submit(
-            self.queues.graphics, &[submit_info], vk::Fence::null()
+            self.queues.graphics, &[submit_info], frame_fence
         ).map_err(|err|QueueSubmitError(err))?;
 
         let swap_chain = &[self.swap_chain.swap_chain];
@@ -217,17 +213,16 @@ impl Drop for RenderingQueue {
             self.frame_in_flight_fences.iter().for_each(
                 |fence| self.logical_device.destroy_fence(*fence, None)
             );
-            self.logical_device.destroy_command_pool(self.command_pool, None);
 
             self.framebuffers.iter().for_each(
                 |buffer| self.logical_device.destroy_framebuffer(*buffer, None)
             );
-
             self.logical_device.destroy_command_pool(self.command_pool, None);
+
             self.logical_device.destroy_pipeline(self.pipeline, None);
+            self.logical_device.destroy_pipeline_layout(self.pipeline_layout, None);
 
             self.logical_device.destroy_render_pass(self.render_pass, None);
-           /// self.logical_device.destroy_pipeline_layout(self);
 
             for image_view in &self.swap_chain.image_views{
                 self.logical_device.destroy_image_view(*image_view, None);

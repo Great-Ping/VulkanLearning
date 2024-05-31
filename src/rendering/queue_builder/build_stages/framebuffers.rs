@@ -13,7 +13,8 @@ pub struct FramebuffersBuildStage{
     pub surface: vk::SurfaceKHR,
     pub swap_chain: Box<super::SwapChainData>,
     pub render_pass: vk::RenderPass,
-    pub pipeline: vk::Pipeline
+    pub pipeline: vk::Pipeline,
+    pub pipeline_layout: vk::PipelineLayout
 }
 
 impl FramebuffersBuildStage {
@@ -50,6 +51,7 @@ impl FramebuffersBuildStage {
             swap_chain: self.swap_chain,
             render_pass: self.render_pass,
             pipeline: self.pipeline,
+            pipeline_layout: self.pipeline_layout,
             framebuffers
         })
     }

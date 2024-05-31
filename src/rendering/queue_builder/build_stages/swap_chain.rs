@@ -65,7 +65,7 @@ impl SwapChainBuildStage  {
         );
 
         let queue_family_indices = self.queue_families.get_unique_indices();
-        let sharing_mode = if queue_family_indices.iter().count() > 1 {
+        let sharing_mode = if queue_family_indices.len() > 1 {
             vk::SharingMode::CONCURRENT
         } else {
             vk::SharingMode::EXCLUSIVE

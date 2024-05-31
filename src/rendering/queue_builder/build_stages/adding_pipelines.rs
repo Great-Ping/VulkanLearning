@@ -206,6 +206,7 @@ impl PipelineAddingStage{
             swap_chain: self.swap_chain,
             render_pass: self.render_pass,
             pipeline,
+            pipeline_layout
         })
     }
 }

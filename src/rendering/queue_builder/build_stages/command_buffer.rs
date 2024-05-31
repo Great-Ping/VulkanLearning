@@ -1,4 +1,5 @@
 use vulkanalia::prelude::v1_0::*;
+use vulkanalia::vk::PipelineLayout;
 use crate::rendering::RenderingError::CreateCommandBufferError;
 use crate::rendering::RqResult;
 use super::SyncObjectsBuildStage;
@@ -14,6 +15,7 @@ pub struct CommandBufferBuildStage {
     pub swap_chain: Box<super::SwapChainData>,
     pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline,
+    pub pipeline_layout: PipelineLayout,
     pub framebuffers: Vec<vk::Framebuffer>,
     pub command_pool: vk::CommandPool
 }
@@ -84,6 +86,7 @@ impl CommandBufferBuildStage{
             swap_chain: self.swap_chain,
             render_pass: self.render_pass,
             pipeline: self.pipeline,
+            pipeline_layout: self.pipeline_layout,
             framebuffers: self.framebuffers,
             command_pool: self.command_pool,
             command_buffers

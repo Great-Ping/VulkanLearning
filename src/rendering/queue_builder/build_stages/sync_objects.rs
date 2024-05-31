@@ -1,9 +1,5 @@
 use vulkanalia::prelude::v1_0::*;
-use vulkanalia::vk::{
-    HasBuilder,
-    KhrSurfaceExtension,
-    KhrSwapchainExtension
-};
+use vulkanalia::vk::{HasBuilder, KhrSurfaceExtension, KhrSwapchainExtension, PipelineLayout};
 
 use crate::rendering::queue_builder::builder_extension::EndBuildStage;
 use crate::rendering::RenderingError::CreateSyncObjectsError;
@@ -21,6 +17,7 @@ pub struct SyncObjectsBuildStage{
     pub swap_chain: Box<super::SwapChainData>,
     pub render_pass: vk::RenderPass,
     pub pipeline: vk::Pipeline,
+    pub pipeline_layout: PipelineLayout,
     pub framebuffers: Vec<vk::Framebuffer>,
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>
@@ -69,6 +66,7 @@ impl SyncObjectsBuildStage{
             swap_chain: self.swap_chain,
             render_pass: self.render_pass,
             pipeline: self.pipeline,
+            pipeline_layout: self.pipeline_layout,
             framebuffers: self.framebuffers,
             command_pool: self.command_pool,
             command_buffers: self.command_buffers,
