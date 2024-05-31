@@ -30,5 +30,8 @@ pub enum RenderingError {
     CreateSyncObjectsError(ErrorCode),
     AcquireImageError(ErrorCode),
     QueueSubmitError(ErrorCode),
-    PresentationError(ErrorCode)
+    PresentationError(ErrorCode),
+
+    WaitForFencesError(ErrorCode),
+    ResetFenceError(ErrorCode)
 }

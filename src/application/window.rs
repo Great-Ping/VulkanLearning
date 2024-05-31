@@ -42,16 +42,15 @@ impl ApplicationWindow {
         return self.window.inner_size() ;
     }
 
-    pub fn run(self, rendering_queue: &RenderingQueue) -> Result<(), ApplicationError>{
+    pub fn run(mut self, rendering_queue: &mut RenderingQueue) -> Result<(), ApplicationError>{
         debug!("Starting main loop");
         self.event_loop.run(|event: Event<()>, target_window:&EventLoopWindowTarget<()>|{
             match event {
                 Event::AboutToWait => {
                     self.window.request_redraw();
-                    rendering_queue.render().unwrap();
                 },
                 Event::WindowEvent {event, ..}  =>
-                    processing_window_event(event, target_window),
+                    processing_window_event(event, target_window, rendering_queue),
                 _ => {}
             }
         })?;
@@ -61,12 +60,13 @@ impl ApplicationWindow {
 
 fn processing_window_event(
     event: WindowEvent,
-    target_window: &EventLoopWindowTarget<()>
+    target_window: &EventLoopWindowTarget<()>,
+    rendering_queue: &mut RenderingQueue
 ){
     match event {
         WindowEvent::RedrawRequested => {
             if !target_window.exiting() {
-                //println!("redraw");
+                rendering_queue.render().unwrap();
             }
         }
         WindowEvent::CloseRequested => {

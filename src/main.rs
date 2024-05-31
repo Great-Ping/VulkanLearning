@@ -62,7 +62,7 @@ pub fn create_rendering_queue<TWindow>(
         .create_framebuffers()?
         .create_command_pool()?
         .create_command_buffer()?
-        .create_sync_objects(1)?
+        .create_sync_objects(4)?
         .build();
 
     Result::Ok(rendering_queue)
@@ -81,13 +81,13 @@ fn main(){
         ApplicationWindow::new()
             .expect("window creation exception");
 
-    let rendering_queue = create_rendering_queue(
+    let mut rendering_queue = create_rendering_queue(
         &window,
         true,
         RenderingResolution::from(window.inner_size())
     ).expect("rendering queue create exception");
 
-    window.run(&rendering_queue)
+    window.run(&mut rendering_queue)
         .expect("main loop exception");
 
 

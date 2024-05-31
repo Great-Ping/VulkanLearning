@@ -30,17 +30,34 @@ pub struct SyncObjectsBuildStage{
 impl SyncObjectsBuildStage{
     pub fn create_sync_objects(self, flight_frames_count: u8) -> RqResult<EndBuildStage>{
         let semaphore_info = vk::SemaphoreCreateInfo::default();
+        let fence_info = vk::FenceCreateInfo::builder()
+            .flags(vk::FenceCreateFlags::SIGNALED)
+            .build();
 
-        let image_available_semaphore = unsafe {
-            self.logical_device.create_semaphore(&semaphore_info, None)
-                .map_err(|err| CreateSyncObjectsError(err))?
-        };
+        let mut image_available_semaphores = Vec::with_capacity(flight_frames_count as usize);
+        let mut render_finished_semaphores = Vec::with_capacity(flight_frames_count as usize);
+        let mut frame_in_flight_fences = Vec::with_capacity(flight_frames_count as usize);
 
-        let semaphore_info = vk::SemaphoreCreateInfo::default();
-        let render_finished_semaphore = unsafe{
-            self.logical_device.create_semaphore(&semaphore_info, None)
-                .map_err(|err| CreateSyncObjectsError(err))?
-        };
+        for _ in 0..flight_frames_count{
+            let fence = unsafe {
+                self.logical_device.create_fence(&fence_info, None)
+                    .map_err(|err| CreateSyncObjectsError(err))?
+            };
+
+            let image = unsafe {
+                self.logical_device.create_semaphore(&semaphore_info, None)
+                    .map_err(|err| CreateSyncObjectsError(err))?
+            };
+            let render = unsafe{
+                self.logical_device.create_semaphore(&semaphore_info, None)
+                    .map_err(|err| CreateSyncObjectsError(err))?
+            };
+
+            frame_in_flight_fences.push(fence);
+            image_available_semaphores.push(image);
+            render_finished_semaphores.push(render);
+        }
+
         Result::Ok(EndBuildStage{
             entry: self.entry,
             instance: self.instance,
@@ -55,8 +72,9 @@ impl SyncObjectsBuildStage{
             framebuffers: self.framebuffers,
             command_pool: self.command_pool,
             command_buffers: self.command_buffers,
-            image_available_semaphore,
-            render_finished_semaphore,
+            image_available_semaphores,
+            render_finished_semaphores,
+            frame_in_flight_fences,
             flight_frames_count
         })
     }

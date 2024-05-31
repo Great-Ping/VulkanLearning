@@ -49,8 +49,9 @@ pub struct EndBuildStage {
     pub framebuffers: Vec<vk::Framebuffer>,
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>,
-    pub image_available_semaphore: Semaphore,
-    pub render_finished_semaphore: Semaphore,
+    pub image_available_semaphores: Vec<Semaphore>,
+    pub render_finished_semaphores: Vec<Semaphore>,
+    pub frame_in_flight_fences: Vec<vk::Fence>,
     pub flight_frames_count: u8
 }
 
@@ -84,8 +85,9 @@ impl EndBuildStage {
             self.framebuffers,
             self.command_pool,
             self.command_buffers,
-            self.image_available_semaphore,
-            self.render_finished_semaphore,
+            self.image_available_semaphores,
+            self.render_finished_semaphores,
+            self.frame_in_flight_fences,
             self.flight_frames_count
         )
     }

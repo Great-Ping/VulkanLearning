@@ -190,6 +190,11 @@ impl PipelineAddingStage{
 
         let pipeline = pipelines.0[0];
 
+        unsafe {
+            self.logical_device.destroy_shader_module(vertex_shader_module, None);
+            self.logical_device.destroy_shader_module(fragment_shader_module, None);
+        }
+
         Result::Ok(FramebuffersBuildStage{
             entry: self.entry,
             instance: self.instance,
