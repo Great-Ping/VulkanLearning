@@ -100,7 +100,7 @@ fn create_output_directory_if_not_exists(directory_path: String) {
 
 
 fn main(){
-
+return;
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let profile_dir = env::var("PROFILE").unwrap();
     let out_dir = concat_paths(&manifest_dir, "target");

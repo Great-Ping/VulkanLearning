@@ -1,5 +1,5 @@
 use vulkanalia::prelude::v1_0::*;
-use crate::rendering::queue_builder::command_pool::CommandPoolBuildStage;
+use crate::rendering::queue_builder::CommandPoolBuildStage;
 use crate::rendering::RenderingError::CreateFrameBufferError;
 use crate::rendering::RqResult;
 

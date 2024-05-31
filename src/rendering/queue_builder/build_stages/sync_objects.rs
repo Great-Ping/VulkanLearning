@@ -9,6 +9,7 @@ use crate::rendering::queue_builder::builder_extension::EndBuildStage;
 use crate::rendering::RenderingError::CreateSyncObjectsError;
 use crate::rendering::RqResult;
 
+
 pub struct SyncObjectsBuildStage{
     pub entry: Box<Entry>,
     pub instance: Box<Instance>,
@@ -27,18 +28,19 @@ pub struct SyncObjectsBuildStage{
 
 
 impl SyncObjectsBuildStage{
-    pub fn create_sync_objects(self) -> RqResult<EndBuildStage>{
+    pub fn create_sync_objects(self, flight_frames_count: u8) -> RqResult<EndBuildStage>{
         let semaphore_info = vk::SemaphoreCreateInfo::default();
 
         let image_available_semaphore = unsafe {
             self.logical_device.create_semaphore(&semaphore_info, None)
                 .map_err(|err| CreateSyncObjectsError(err))?
         };
+
+        let semaphore_info = vk::SemaphoreCreateInfo::default();
         let render_finished_semaphore = unsafe{
             self.logical_device.create_semaphore(&semaphore_info, None)
                 .map_err(|err| CreateSyncObjectsError(err))?
         };
-
         Result::Ok(EndBuildStage{
             entry: self.entry,
             instance: self.instance,
@@ -54,7 +56,8 @@ impl SyncObjectsBuildStage{
             command_pool: self.command_pool,
             command_buffers: self.command_buffers,
             image_available_semaphore,
-            render_finished_semaphore
+            render_finished_semaphore,
+            flight_frames_count
         })
     }
 }

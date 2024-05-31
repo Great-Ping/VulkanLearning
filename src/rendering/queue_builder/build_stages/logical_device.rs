@@ -8,10 +8,21 @@ use super::{
     QueueFamilyIndices,
     SwapChainBuildStage,
     SwapСhainSupport,
+};
+
+use crate::rendering::{
     VALIDATION_LAYER
 };
 
 pub const REQUIRED_EXTENSIONS: &[vk::ExtensionName] = &[vk::KHR_SWAPCHAIN_EXTENSION.name];
+
+
+#[derive(Debug)]
+pub struct DeviceQueues{
+    pub indices: QueueFamilyIndices,
+    pub graphics: vk::Queue,
+    pub present: vk::Queue
+}
 
 pub struct LogicalDeviceBuildStage {
     pub entry: Box<Entry>,
@@ -36,11 +47,11 @@ impl LogicalDeviceBuildStage {
 
         let layers = get_layers(use_validation_layer);
         let extensions = get_extensions();
-        let features = vk::PhysicalDeviceFeatures::default();
+        let features = vk::PhysicalDeviceFeatures::builder();
 
         let device_info = vk::DeviceCreateInfo::builder()
             .queue_create_infos(&queue_infos)
-            .enabled_layer_names(&layers) // eprecated?
+            .enabled_layer_names(&layers)
             .enabled_extension_names(&extensions)
             .enabled_features(&features)
             .build();

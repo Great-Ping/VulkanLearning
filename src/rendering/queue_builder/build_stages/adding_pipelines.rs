@@ -1,6 +1,7 @@
+use vulkanalia::bytecode::Bytecode;
 use vulkanalia::prelude::v1_0::*;
 use crate::rendering::{FramebuffersBuildStage, QueueFamilyIndices, RenderingQueue, RqResult, SwapChainData};
-use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError};
+use crate::rendering::RenderingError::{BuildPipelinesError, CreatePipelineLayoutError, LoadShadersError};
 use crate::rendering::shaders::Shader;
 
 pub struct PipelineAddingStage{
@@ -22,16 +23,54 @@ impl PipelineAddingStage{
         vertex_shader: &Shader,
         fragment_shader: &Shader,
     ) -> RqResult<FramebuffersBuildStage> {
+        let vertex_shader_bytecode = include_bytes!("../../../assets/shaders/Example.vert.spv");
+        let fragment_shader_bytecode = include_bytes!("../../../assets/shaders/Example.frag.spv");
+
+        // let vertex_shader_info = vk::ShaderModuleCreateInfo::builder()
+        //     .code_size(vertex_shader.bytecode.code_size())
+        //     .code(vertex_shader.bytecode.code())
+        //     .build();
+        //
+        // let vertex_shader_module = unsafe {
+        //     self.logical_device.create_shader_module(&vertex_shader_info, None)
+        //         .map_err(|err| LoadShadersError(format!("create shaders module error {}", err)))?
+        // };
+
+        let vertex_shader_module = unsafe {
+            create_shader_module(
+                &self.logical_device,
+                vertex_shader_bytecode
+            ).unwrap()
+        };
+
         let vertex_shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::VERTEX)
-            .module(vertex_shader.module.clone())
-            .name(vertex_shader.name.as_slice())
+            .module(vertex_shader_module.clone())
+            .name(b"main\0")
             .build();
+
+        // let fragment_shader_info = vk::ShaderModuleCreateInfo::builder()
+        //     .code_size(fragment_shader.bytecode.code_size())
+        //     .code(fragment_shader.bytecode.code())
+        //     .build();
+        //
+        // let fragment_shader_module = unsafe {
+        //     self.logical_device.create_shader_module(&fragment_shader_info, None)
+        //         .map_err(|err| LoadShadersError(format!("create shaders module error {}", err)))?
+        // };
+
+        let fragment_shader_module = unsafe {
+            create_shader_module(
+                &self.logical_device,
+                fragment_shader_bytecode
+            ).unwrap()
+        };
+
 
         let fragment_shader_stage = vk::PipelineShaderStageCreateInfo::builder()
             .stage(vk::ShaderStageFlags::FRAGMENT)
-            .module(fragment_shader.module.clone())
-            .name(fragment_shader.name.as_slice())
+            .module(fragment_shader_module)
+            .name(b"main\0")
             .build();
 
         let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default();
@@ -164,4 +203,15 @@ impl PipelineAddingStage{
             pipeline,
         })
     }
+}
+
+
+unsafe fn create_shader_module(device: &Device, bytecode: &[u8]) -> RqResult<vk::ShaderModule> {
+    let bytecode = Bytecode::new(bytecode).unwrap();
+
+    let info = vk::ShaderModuleCreateInfo::builder()
+        .code_size(bytecode.code_size())
+        .code(bytecode.code());
+
+    Ok(device.create_shader_module(&info, None).unwrap())
 }

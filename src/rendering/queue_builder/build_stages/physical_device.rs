@@ -17,6 +17,7 @@ pub struct QueueFamilyIndices{
     pub graphics: u32,
     pub present: u32
 }
+
 impl QueueFamilyIndices{
     pub fn create(
         instance: &Instance,

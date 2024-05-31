@@ -9,8 +9,6 @@ use winit::raw_window_handle::{
 
 use vulkanalia::Entry;
 use vulkanalia::vk::ExtDebugUtilsExtension;
-use vulkanalia::vk::KhrSurfaceExtension;
-use vulkanalia::vk::KhrSwapchainExtension;
 use vulkanalia::window::{
     create_surface,
     get_required_instance_extensions
@@ -22,7 +20,7 @@ use crate::rendering::RenderingError::{
     SupportError
 };
 
-use super::{
+use crate::rendering::{
     get_debug_info,
     PhysicalDeviceBuildStage,
     VALIDATION_LAYER};
@@ -127,11 +125,13 @@ unsafe fn get_layers(
         .collect::<HashSet<_>>();
 
     if use_validation_layer {
-        Result::Ok(Vec::new())
-    } else if available_layers.contains(&VALIDATION_LAYER) {
-        Result::Ok(vec![VALIDATION_LAYER.as_ptr()])
+        if !available_layers.contains(&VALIDATION_LAYER) {
+           Result::Err(SupportError("Required layers is not supported"))
+        } else {
+            Result::Ok(vec![VALIDATION_LAYER.as_ptr()])
+        }
     } else {
-        Result::Err(SupportError("Required layers is not supported"))
+        Result::Ok(Vec::new())
     }
 }
 

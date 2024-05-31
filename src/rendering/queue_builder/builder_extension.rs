@@ -5,18 +5,12 @@ use vulkanalia::loader::{
 };
 use vulkanalia::vk::Semaphore;
 
-use crate::rendering::{
-    RenderingQueue,
-    RqResult
-};
+use crate::rendering::{DeviceQueues, RenderingQueue, RqResult};
 use crate::rendering::RenderingError::{
     CreateEntryError,
     LoadLibraryError
 };
-
-use super::{
-    InstanceBuildStage,
-};
+use super::build_stages::InstanceBuildStage;
 
 pub struct RenderingQueueBuilder;
 
@@ -56,18 +50,33 @@ pub struct EndBuildStage {
     pub command_pool: vk::CommandPool,
     pub command_buffers: Vec<vk::CommandBuffer>,
     pub image_available_semaphore: Semaphore,
-    pub render_finished_semaphore: Semaphore
+    pub render_finished_semaphore: Semaphore,
+    pub flight_frames_count: u8
 }
 
 impl EndBuildStage {
     pub fn build(self) -> RenderingQueue {
+
+        let graphics = unsafe {
+            self.logical_device.get_device_queue(self.queue_families.graphics, 0)
+        };
+        let present = unsafe {
+            self.logical_device.get_device_queue(self.queue_families.present, 0)
+        };
+
+        let queues = Box::new(DeviceQueues{
+            indices: self.queue_families,
+            graphics,
+            present
+        });
+
         return RenderingQueue::new(
             self.entry,
             self.instance,
             self.messenger,
             self.physical_device,
             self.logical_device,
-            self.queue_families,
+            queues,
             self.surface,
             self.swap_chain,
             self.render_pass,
@@ -76,7 +85,8 @@ impl EndBuildStage {
             self.command_pool,
             self.command_buffers,
             self.image_available_semaphore,
-            self.render_finished_semaphore
+            self.render_finished_semaphore,
+            self.flight_frames_count
         )
     }
 }

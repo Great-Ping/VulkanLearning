@@ -42,16 +42,29 @@ impl RenderPassBuildStage{
 
         let color_attachment_refs = &[color_attachment_ref];
 
+        let dependency = vk::SubpassDependency::builder()
+            .src_subpass(vk::SUBPASS_EXTERNAL) //  |неявный подпас
+            .dst_subpass(0) //индекс подпаса       |до ренедринга
+            .src_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+            .src_access_mask(vk::AccessFlags::empty())
+            .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+            .dst_access_mask(vk::AccessFlags::COLOR_ATTACHMENT_WRITE)
+            .build();
+
+        let dependencies = &[dependency];
+
         //Подпас графического типа
         let subpass = vk::SubpassDescription::builder()
             .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
-            .color_attachments(color_attachment_refs);
+            .color_attachments(color_attachment_refs)
+            .build();
 
         let subpasses = &[subpass];
 
         let render_pass = vk::RenderPassCreateInfo::builder()
             .attachments(color_attachments)
             .subpasses(subpasses)
+            .dependencies(dependencies)
             .build();
 
         let render_pass = unsafe {

@@ -1,3 +1,4 @@
+use std::io::ErrorKind;
 use std::path::PathBuf;
 use libloading::Error;
 use vulkanalia::loader::LoaderError;
@@ -26,5 +27,8 @@ pub enum RenderingError {
     CreateCommandPoolError(ErrorCode),
     CreateCommandBufferError(ErrorCode),
 
-    CreateSyncObjectsError(ErrorCode)
+    CreateSyncObjectsError(ErrorCode),
+    AcquireImageError(ErrorCode),
+    QueueSubmitError(ErrorCode),
+    PresentationError(ErrorCode)
 }

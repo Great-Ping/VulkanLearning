@@ -12,14 +12,13 @@ use crate::rendering::RenderingError::LoadShadersError;
 use crate::rendering::RqResult;
 
 pub struct Shader {
-    pub module: ShaderModule,
+    pub bytecode: Bytecode,
     pub name: Vec<u8>
 }
 
 impl Shader{
     pub fn read_file(
         path: &PathBuf,
-        logical_device: &Device,
         buffer: &mut Vec<u8>,
     ) -> RqResult<Self>{
         let mut shader_file = fs::File::open(path)
@@ -33,20 +32,11 @@ impl Shader{
             .map_err(|err|
                 LoadShadersError(format!("Bytecode error {}", err)))?;
 
-        let shader_module_info = vk::ShaderModuleCreateInfo::builder()
-            .code_size(bytecode.code_size())
-            .code(bytecode.code())
-            .build();
-
-        let shader_module = unsafe {
-            logical_device.create_shader_module(&shader_module_info, None)
-                .map_err(|err| LoadShadersError(format!("create shaders module error {}", err)))?
-        };
-
         let file_name = get_file_name_or_default(path, "unknown");
+
         Result::Ok(Self{
+            bytecode,
             name: file_name,
-            module: shader_module
         })
     }
 }
